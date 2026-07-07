@@ -1,222 +1,241 @@
 "use client";
 
+import { useState } from "react";
+import { motion } from "motion/react";
+import { ArrowRight, Menu, X, Star, Users, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import LogoIcon from "@/src/assets/logo-icon";
-import { ArrowRight, Users } from "lucide-react";
-import { motion, type Variants } from "framer-motion";
-import Link from "next/link";
-
-interface NavLink {
-  label: string;
-  href: string;
-}
+import { useRouter } from "next/navigation";
 
 interface HeroProps {
-  brandName?: string;
-  navLinks?: NavLink[];
-  headingLine1?: string;
-  headingLine2?: string;
-  description?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  signupLabel?: string;
-  signupHref?: string;
+  titleLine1?: string;
+  titleHighlight?: string;
+  titleLine2?: string;
+  subtitle?: string;
+  primaryActionText?: string;
+  primaryActionHref?: string;
+  secondaryActionText?: string;
+  secondaryActionHref?: string;
   socialProofText?: string;
   backgroundImage?: string;
 }
 
-const navLinksDefault: NavLink[] = [
+const navLinks = [
   { label: "Fan Assistant", href: "/fan" },
   { label: "Operations", href: "/operations" },
   { label: "Volunteer", href: "/volunteer" },
+  { label: "About", href: "/about" },
 ];
 
-const sectionVariants: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.11,
-      delayChildren: 0.05,
-    },
-  },
-};
+const PLACEHOLDER_AVATARS = [
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+];
 
-const bgVariants: Variants = {
-  hidden: { opacity: 0, scale: 1.07 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.4, ease: [0.25, 0.1, 0.25, 1] },
-  },
-};
-
-const navVariants: Variants = {
-  hidden: { opacity: 0, y: -18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 340, damping: 26, mass: 0.75 },
-  },
-};
-
-const headingVariants: Variants = {
-  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { type: "spring", stiffness: 180, damping: 28, mass: 1.1 },
-  },
-};
-
-const subtitleVariants: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 200, damping: 30, mass: 0.9 },
-  },
-};
-
-const ctaVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.82, y: 6 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 420, damping: 24, mass: 0.65 },
-  },
-};
-
-const socialProofVariants: Variants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { type: "spring", stiffness: 260, damping: 28, mass: 0.8 },
-  },
-};
-
-export default function Home({
-  brandName = "StadiumOS",
-  navLinks = navLinksDefault,
-  headingLine1 = "AI-Powered Stadium",
-  headingLine2 = "Intelligence for FIFA 2026",
-  description = "Enhance fan experience, optimize operations, and empower volunteers with real-time AI insights.",
-  ctaLabel = "Fan Assistant",
-  ctaHref = "/fan",
-  signupLabel = "Operations Dashboard",
-  signupHref = "/operations",
-  socialProofText = "Trusted by stadiums worldwide",
+export default function Hero({
+  titleLine1 = "AI-Powered",
+  titleHighlight = "Stadium",
+  titleLine2 = "Intelligence for FIFA 2026",
+  subtitle = "Enhance fan experience, optimize operations, and empower volunteers with real-time AI insights for the world's biggest sporting event.",
+  primaryActionText = "Try Fan Assistant",
+  primaryActionHref = "/fan",
+  secondaryActionText = "View Operations",
+  secondaryActionHref = "/operations",
+  socialProofText = "Trusted by 200+ stadiums worldwide",
   backgroundImage = "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?q=80&w=2852&auto=format&fit=crop",
 }: HeroProps) {
+  const [activeNav, setActiveNav] = useState("Fan Assistant");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const router = useRouter();
+
   return (
-    <section className="relative isolate min-h-screen overflow-hidden bg-zinc-100 font-sans antialiased">
-      {/* Background image */}
-      <motion.img
-        src={backgroundImage}
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
-        variants={bgVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+    <section className="relative flex min-h-dvh w-full flex-col items-center overflow-hidden bg-[#F5F3EE]">
+      {/* Background Image with subtle overlay */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
       />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#F5F3EE]/90 via-[#F5F3EE]/70 to-[#F5F3EE]/95" />
 
-      {/* Subtle top-to-bottom gradient overlay to keep text legible */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/18 via-transparent to-black/10" />
-
-      {/* Main layout */}
-      <motion.div
-        className="relative flex min-h-screen w-full flex-col px-5 py-4 sm:px-8 lg:px-14"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        variants={sectionVariants}
+      {/* Floating Navbar */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative z-50 mt-6 flex h-16 w-[calc(100%-2rem)] max-w-7xl items-center justify-between rounded-2xl bg-white/90 px-4 shadow-[0_2px_20px_rgba(0,0,0,0.06)] backdrop-blur-md sm:px-6"
       >
-        {/* ── Navigation ────────────────────────────────────────────────── */}
-        <motion.nav
-          variants={navVariants}
-          className="relative z-20 flex min-h-10 w-full items-center justify-between gap-4"
-        >
-          {/* Brand */}
-          <Link
-            href="/"
-            className="inline-flex min-h-10 items-center gap-2 text-lg font-medium text-zinc-100 transition-opacity duration-200 hover:opacity-75"
-          >
-            <LogoIcon className="size-8 text-zinc-100" />
-            {brandName}
-          </Link>
-
-          {/* Center nav links */}
-          <div className="hidden items-center gap-7 md:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="inline-flex min-h-10 items-center text-sm font-medium text-zinc-100 transition-[opacity,transform] duration-200 hover:opacity-80 active:scale-[0.96]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Sign up CTA */}
-          <Link
-            href={signupHref}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-zinc-50 px-5 text-sm font-medium text-zinc-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_0_0_1px_rgba(255,255,255,1)] backdrop-blur-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.10)] active:scale-[0.96]"
-          >
-            {signupLabel}
-          </Link>
-        </motion.nav>
-
-        {/* ── Hero content ─────────────────────────────────────────────── */}
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-start pt-14 sm:pt-16 md:pt-14">
-          {/* Heading */}
-          <motion.h1
-            variants={headingVariants}
-            className="max-w-md text-center text-[clamp(2.5rem,5.5vw,5.5rem)] leading-[1.03] font-medium tracking-[-0.032em] text-balance text-zinc-900 sm:max-w-xl md:max-w-4xl 2xl:max-w-7xl"
-          >
-            <span className="block text-orange-500">{headingLine1}</span>
-            <span className="block">{headingLine2}</span>
-          </motion.h1>
-
-          {/* Description */}
-          <motion.p
-            variants={subtitleVariants}
-            className="mt-5 max-w-xs text-center text-sm leading-[1.5] font-medium text-pretty text-zinc-700 sm:max-w-sm 2xl:text-lg"
-          >
-            {description}
-          </motion.p>
-
-          {/* CTA Button */}
-          <motion.div variants={ctaVariants} className="mt-7">
-            <Link
-              href={ctaHref}
-              className="group inline-flex min-h-11 items-center justify-between gap-0 overflow-hidden rounded-full bg-zinc-50 pr-1 pl-5 text-sm font-medium text-zinc-900 shadow-[0_2px_12px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,1)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] active:scale-[0.97]"
-            >
-              <span className="pr-3">{ctaLabel}</span>
-              <span className="inline-flex size-9 items-center justify-center rounded-full bg-yellow-400 text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(0,0,0,0.10)] transition-[background-color,transform] duration-300">
-                <ArrowRight className="size-4 stroke-[2.25]" />
-              </span>
-            </Link>
-          </motion.div>
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <LogoIcon className="size-8 text-orange-500" />
+          <span className="text-lg font-semibold tracking-tight text-gray-900">
+            StadiumOS
+          </span>
         </div>
 
-        {/* ── Social proof — bottom-left ────────────────────────────────── */}
+        {/* Desktop Navigation */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => setActiveNav(link.label)}
+              className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                activeNav === link.label
+                  ? "text-gray-900"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {activeNav === link.label && (
+                <motion.div
+                  layoutId="activeNav"
+                  className="absolute inset-0 -z-10 rounded-full bg-orange-50/80 shadow-sm"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              {link.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Button
+            size="sm"
+            className="hidden h-9 rounded-xl bg-orange-500 px-4 text-sm font-medium text-white shadow-[0_2px_10px_rgba(249,115,22,0.3)] transition-all hover:bg-orange-600 hover:shadow-[0_4px_20px_rgba(249,115,22,0.4)] sm:flex"
+          >
+            Get Started
+          </Button>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="flex size-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-gray-100 md:hidden"
+          >
+            {isMobileMenuOpen ? (
+              <X className="size-5" />
+            ) : (
+              <Menu className="size-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-full left-0 mt-2 w-full overflow-hidden rounded-2xl bg-white/95 shadow-xl backdrop-blur-md md:hidden"
+          >
+            <nav className="flex flex-col p-2">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => {
+                    setActiveNav(link.label);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    activeNav === link.label
+                      ? "bg-orange-50 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  {link.label}
+                </button>
+              ))}
+              <Button
+                size="sm"
+                className="mt-2 w-full rounded-xl bg-orange-500 text-white hover:bg-orange-600"
+              >
+                Get Started
+              </Button>
+            </nav>
+          </motion.div>
+        )}
+      </motion.header>
+
+      {/* Main Content */}
+      <div className="relative z-10 container flex flex-1 flex-col items-center justify-center px-4 pb-20 text-center md:pb-32">
         <motion.div
-          variants={socialProofVariants}
-          className="absolute bottom-6 left-5 z-20 flex items-center gap-2.5 sm:bottom-7 sm:left-8 lg:left-14"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          className="mx-auto flex w-full max-w-4xl flex-col items-center"
         >
-          {/* Avatar cluster icon */}
-          <div className="inline-flex size-8 items-center justify-center rounded-full bg-white/70 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-sm">
-            <Users className="size-[0.875rem] text-zinc-600" />
-          </div>
-          <span className="text-[0.75rem] font-medium text-zinc-800 drop-shadow-sm">
-            {socialProofText}
-          </span>
+          {/* Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mb-6 text-center text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl"
+          >
+            {titleLine1}{" "}
+            <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+              {titleHighlight}
+            </span>
+            <br />
+            <span className="text-gray-800">{titleLine2}</span>
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg md:text-xl"
+          >
+            {subtitle}
+          </motion.p>
+
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row sm:gap-4"
+          >
+            <Button
+              size="lg"
+              className="h-14 w-full rounded-xl bg-orange-500 px-8 text-base font-medium text-white shadow-[0_4px_20px_rgba(249,115,22,0.35)] transition-all hover:bg-orange-600 hover:shadow-[0_6px_30px_rgba(249,115,22,0.45)] sm:w-auto"
+              onClick={() => router.push(primaryActionHref)}
+            >
+              {primaryActionText}
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-14 w-full rounded-xl border-2 border-gray-200 bg-white/80 px-8 text-base font-medium text-gray-700 shadow-sm transition-all hover:border-orange-200 hover:bg-orange-50 hover:text-gray-900 sm:w-auto"
+              onClick={() => router.push(secondaryActionHref)}
+            >
+              {secondaryActionText}
+            </Button>
+          </motion.div>
+
+          {/* Feature Pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-12 flex flex-wrap items-center justify-center gap-3"
+          >
+            {[
+              "Real-time AI",
+              "Smart Navigation",
+              "Crowd Insights",
+              "Accessibility",
+            ].map((feature) => (
+              <span
+                key={feature}
+                className="rounded-full bg-white/70 px-4 py-1.5 text-xs font-medium text-gray-700 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-sm"
+              >
+                {feature}
+              </span>
+            ))}
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </section>
   );
 }
