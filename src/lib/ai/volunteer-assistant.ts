@@ -9,7 +9,7 @@ export class VolunteerAssistantService {
     const lowerQuery = volunteerQuery.toLowerCase();
     let guidance = "";
     let steps: string[] = [];
-    let nearbyResources = [];
+    let nearbyResources: any[] = [];
 
     if (lowerQuery.includes("wheelchair")) {
       guidance = "Guide wheelchair users to the nearest accessible elevator.";

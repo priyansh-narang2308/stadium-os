@@ -1,5 +1,11 @@
-import { OperationsDashboard } from '@/src/features/operations-dashboard/operations-dashboard';
+import { SiteHeader } from "@/src/components/layout/site-header";
+import { OperationsDashboard } from "@/src/features/operations-dashboard/operations-dashboard";
 
 export default function OperationsPage() {
-  return <OperationsDashboard />;
+  return (
+    <>
+      <SiteHeader />
+      <OperationsDashboard />
+    </>
+  );
 }

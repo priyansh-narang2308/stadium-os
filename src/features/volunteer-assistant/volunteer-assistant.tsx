@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Shield, User, Bot, CheckCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { VolunteerAssistantResponse } from "@/src/types";
@@ -50,7 +50,7 @@ export function VolunteerAssistant() {
           data,
         },
       ]);
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -94,7 +94,7 @@ export function VolunteerAssistant() {
           ))}
         </div>
 
-        <Card className="h-[600px] flex flex-col">
+        <Card className="h-150 flex flex-col">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />

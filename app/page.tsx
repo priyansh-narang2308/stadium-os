@@ -1,120 +1,222 @@
 "use client";
 
-import { Trophy, Users, Activity, MapPin, Shield, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import LogoIcon from "@/src/assets/logo-icon";
+import { ArrowRight, Users } from "lucide-react";
+import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 
-const features = [
-  {
-    title: "Fan Assistant AI",
-    description:
-      "Smart navigation, crowd-aware recommendations, and accessibility support for every fan.",
-    icon: <Users className="h-10 w-10 text-primary" />,
-    href: "/fan",
-  },
-  {
-    title: "Operations Intelligence",
-    description:
-      "Real-time dashboards, AI-powered recommendations, and stadium management tools.",
-    icon: <Activity className="h-10 w-10 text-primary" />,
-    href: "/operations",
-  },
-  {
-    title: "Volunteer Assistant",
-    description:
-      "Emergency procedures, accessibility guidance, and fan support tools.",
-    icon: <Shield className="h-10 w-10 text-primary" />,
-    href: "/volunteer",
-  },
+interface NavLink {
+  label: string;
+  href: string;
+}
+
+interface HeroProps {
+  brandName?: string;
+  navLinks?: NavLink[];
+  headingLine1?: string;
+  headingLine2?: string;
+  description?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  signupLabel?: string;
+  signupHref?: string;
+  socialProofText?: string;
+  backgroundImage?: string;
+}
+
+const navLinksDefault: NavLink[] = [
+  { label: "Fan Assistant", href: "/fan" },
+  { label: "Operations", href: "/operations" },
+  { label: "Volunteer", href: "/volunteer" },
 ];
 
-export default function Home() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-6">
-              <Trophy className="h-16 w-16 text-primary" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-              StadiumOS AI
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              AI-powered stadium intelligence platform for FIFA World Cup 2026.
-              Enhancing fan experience and optimizing operations.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg">
-                <Link href="/fan" className="flex items-center justify-center">Get Started</Link>
-              </Button>
-              <Button variant="secondary" size="lg">
-                <Link href="/operations" className="flex items-center justify-center">View Dashboard</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+const sectionVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.11,
+      delayChildren: 0.05,
+    },
+  },
+};
 
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card
-                key={index}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+const bgVariants: Variants = {
+  hidden: { opacity: 0, scale: 1.07 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.4, ease: [0.25, 0.1, 0.25, 1] },
+  },
+};
+
+const navVariants: Variants = {
+  hidden: { opacity: 0, y: -18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 340, damping: 26, mass: 0.75 },
+  },
+};
+
+const headingVariants: Variants = {
+  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { type: "spring", stiffness: 180, damping: 28, mass: 1.1 },
+  },
+};
+
+const subtitleVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 200, damping: 30, mass: 0.9 },
+  },
+};
+
+const ctaVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.82, y: 6 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 420, damping: 24, mass: 0.65 },
+  },
+};
+
+const socialProofVariants: Variants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 260, damping: 28, mass: 0.8 },
+  },
+};
+
+export default function Home({
+  brandName = "StadiumOS",
+  navLinks = navLinksDefault,
+  headingLine1 = "AI-Powered Stadium",
+  headingLine2 = "Intelligence for FIFA 2026",
+  description = "Enhance fan experience, optimize operations, and empower volunteers with real-time AI insights.",
+  ctaLabel = "Fan Assistant",
+  ctaHref = "/fan",
+  signupLabel = "Operations Dashboard",
+  signupHref = "/operations",
+  socialProofText = "Trusted by stadiums worldwide",
+  backgroundImage = "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?q=80&w=2852&auto=format&fit=crop",
+}: HeroProps) {
+  return (
+    <section className="relative isolate min-h-screen overflow-hidden bg-zinc-100 font-sans antialiased">
+      {/* Background image */}
+      <motion.img
+        src={backgroundImage}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+        variants={bgVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      />
+
+      {/* Subtle top-to-bottom gradient overlay to keep text legible */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/18 via-transparent to-black/10" />
+
+      {/* Main layout */}
+      <motion.div
+        className="relative flex min-h-screen w-full flex-col px-5 py-4 sm:px-8 lg:px-14"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={sectionVariants}
+      >
+        {/* ── Navigation ────────────────────────────────────────────────── */}
+        <motion.nav
+          variants={navVariants}
+          className="relative z-20 flex min-h-10 w-full items-center justify-between gap-4"
+        >
+          {/* Brand */}
+          <Link
+            href="/"
+            className="inline-flex min-h-10 items-center gap-2 text-lg font-medium text-zinc-100 transition-opacity duration-200 hover:opacity-75"
+          >
+            <LogoIcon className="size-8 text-zinc-100" />
+            {brandName}
+          </Link>
+
+          {/* Center nav links */}
+          <div className="hidden items-center gap-7 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="inline-flex min-h-10 items-center text-sm font-medium text-zinc-100 transition-[opacity,transform] duration-200 hover:opacity-80 active:scale-[0.96]"
               >
-                <Link href={feature.href} className="block">
-                  <CardHeader>
-                    <div className="mb-4">{feature.icon}</div>
-                    <CardTitle>{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Link>
-              </Card>
+                {link.label}
+              </Link>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">80K</div>
-                <p className="text-muted-foreground">Stadium Capacity</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">24/7</div>
-                <p className="text-muted-foreground">AI Support</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">100+</div>
-                <p className="text-muted-foreground">Facilities</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">
-                  Real-time
-                </div>
-                <p className="text-muted-foreground">Analytics</p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Sign up CTA */}
+          <Link
+            href={signupHref}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-zinc-50 px-5 text-sm font-medium text-zinc-900 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_0_0_1px_rgba(255,255,255,1)] backdrop-blur-sm transition-[background-color,box-shadow,transform] duration-200 hover:bg-white hover:shadow-[0_2px_8px_rgba(0,0,0,0.10)] active:scale-[0.96]"
+          >
+            {signupLabel}
+          </Link>
+        </motion.nav>
+
+        {/* ── Hero content ─────────────────────────────────────────────── */}
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-start pt-14 sm:pt-16 md:pt-14">
+          {/* Heading */}
+          <motion.h1
+            variants={headingVariants}
+            className="max-w-md text-center text-[clamp(2.5rem,5.5vw,5.5rem)] leading-[1.03] font-medium tracking-[-0.032em] text-balance text-zinc-900 sm:max-w-xl md:max-w-4xl 2xl:max-w-7xl"
+          >
+            <span className="block text-orange-500">{headingLine1}</span>
+            <span className="block">{headingLine2}</span>
+          </motion.h1>
+
+          {/* Description */}
+          <motion.p
+            variants={subtitleVariants}
+            className="mt-5 max-w-xs text-center text-sm leading-[1.5] font-medium text-pretty text-zinc-700 sm:max-w-sm 2xl:text-lg"
+          >
+            {description}
+          </motion.p>
+
+          {/* CTA Button */}
+          <motion.div variants={ctaVariants} className="mt-7">
+            <Link
+              href={ctaHref}
+              className="group inline-flex min-h-11 items-center justify-between gap-0 overflow-hidden rounded-full bg-zinc-50 pr-1 pl-5 text-sm font-medium text-zinc-900 shadow-[0_2px_12px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,1)] transition-[box-shadow,transform] duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] active:scale-[0.97]"
+            >
+              <span className="pr-3">{ctaLabel}</span>
+              <span className="inline-flex size-9 items-center justify-center rounded-full bg-yellow-400 text-zinc-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(0,0,0,0.10)] transition-[background-color,transform] duration-300">
+                <ArrowRight className="size-4 stroke-[2.25]" />
+              </span>
+            </Link>
+          </motion.div>
         </div>
-      </section>
-    </div>
+
+        {/* ── Social proof — bottom-left ────────────────────────────────── */}
+        <motion.div
+          variants={socialProofVariants}
+          className="absolute bottom-6 left-5 z-20 flex items-center gap-2.5 sm:bottom-7 sm:left-8 lg:left-14"
+        >
+          {/* Avatar cluster icon */}
+          <div className="inline-flex size-8 items-center justify-center rounded-full bg-white/70 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-sm">
+            <Users className="size-[0.875rem] text-zinc-600" />
+          </div>
+          <span className="text-[0.75rem] font-medium text-zinc-800 drop-shadow-sm">
+            {socialProofText}
+          </span>
+        </motion.div>
+      </motion.div>
+    </section>
   );
 }

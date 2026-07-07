@@ -13,44 +13,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-// Type definitions for the Fan Assistant response
-export interface FanAssistantResponse {
-  rawResponse: string;
-  estimatedWalkingTime?: number;
-  crowdWarnings?: string[];
-  accessibilityNotes?: string;
-  nearestFacilities?: Array<{
-    name: string;
-    distance: string;
-    type: "restroom" | "food" | "medical" | "information";
-  }>;
-  navigationSteps?: string[];
-}
-
-// Type for message structure
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  data?: FanAssistantResponse;
-}
+import { FanAssistantResponse } from "@/src/types";
 
 export function FanAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<
+    {
+      role: "user" | "assistant";
+      content: string;
+      data?: FanAssistantResponse;
+    }[]
+  >([
     {
       role: "assistant",
       content:
         "Hello! I'm your StadiumOS AI Fan Assistant. How can I help you today?",
-      data: {
-        rawResponse:
-          "Hello! I'm your StadiumOS AI Fan Assistant. How can I help you today?",
-        estimatedWalkingTime: 0,
-        crowdWarnings: [],
-        accessibilityNotes:
-          "Accessibility assistance is available at all entrances.",
-        nearestFacilities: [],
-        navigationSteps: [],
-      },
     },
   ]);
   const [input, setInput] = useState("");
@@ -59,7 +35,7 @@ export function FanAssistant() {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage = { role: "user" as const, content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -67,55 +43,23 @@ export function FanAssistant() {
     try {
       const response = await fetch("/api/fan-assistant", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: input }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
-
       const data: FanAssistantResponse = await response.json();
-
-      // Ensure data has required structure
-      const assistantMessage: Message = {
-        role: "assistant",
-        content:
-          data.rawResponse ||
-          "I've received your request. How else can I help?",
-        data: {
-          rawResponse:
-            data.rawResponse ||
-            "I've received your request. How else can I help?",
-          estimatedWalkingTime: data.estimatedWalkingTime || 0,
-          crowdWarnings: data.crowdWarnings || [],
-          accessibilityNotes:
-            data.accessibilityNotes || "Accessibility assistance is available.",
-          nearestFacilities: data.nearestFacilities || [],
-          navigationSteps: data.navigationSteps || [],
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.rawResponse, data },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
         },
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error:", error);
-      const errorMessage: Message = {
-        role: "assistant",
-        content:
-          "Sorry, I encountered an error. Please try again or visit the nearest information desk.",
-        data: {
-          rawResponse: "Error occurred",
-          estimatedWalkingTime: 0,
-          crowdWarnings: [],
-          accessibilityNotes:
-            "Please visit the nearest information desk for assistance.",
-          nearestFacilities: [],
-          navigationSteps: [],
-        },
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -128,22 +72,6 @@ export function FanAssistant() {
     "I need medical assistance.",
   ];
 
-  // Helper function to render facility icons
-  const getFacilityIcon = (type: string) => {
-    switch (type) {
-      case "restroom":
-        return "🚻";
-      case "food":
-        return "🍔";
-      case "medical":
-        return "🏥";
-      case "information":
-        return "ℹ️";
-      default:
-        return "📍";
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -154,21 +82,13 @@ export function FanAssistant() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {exampleQueries.map((query, index) => (
             <Button
               key={index}
               variant="secondary"
-              className="h-auto py-4 px-4 justify-start text-left whitespace-normal text-sm"
-              onClick={() => {
-                setInput(query);
-                // Optionally auto-submit after a short delay
-                setTimeout(() => {
-                  if (query.trim()) {
-                    handleSend();
-                  }
-                }, 300);
-              }}
+              className="h-auto py-4 justify-start text-left whitespace-normal"
+              onClick={() => setInput(query)}
             >
               {query}
             </Button>
@@ -187,18 +107,16 @@ export function FanAssistant() {
               {messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-3 ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
-                    className={`flex gap-3 max-w-[85%] ${message.role === "user" ? "flex-row-reverse" : ""}`}
+                    className={`flex gap-3 max-w-[80%] ${
+                      message.role === "user" ? "flex-row-reverse" : ""
+                    }`}
                   >
-                    <div
-                      className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
+                    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted">
                       {message.role === "user" ? (
                         <User className="h-4 w-4" />
                       ) : (
@@ -213,61 +131,17 @@ export function FanAssistant() {
                       }`}
                     >
                       <p className="whitespace-pre-line">{message.content}</p>
-
-                      {/* Display additional data if available */}
-                      {message.data && message.role === "assistant" && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          {message.data.estimatedWalkingTime &&
-                            message.data.estimatedWalkingTime > 0 && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <Clock className="h-4 w-4" />
-                                <span>
-                                  Estimated walking time:{" "}
-                                  {message.data.estimatedWalkingTime} minutes
-                                </span>
-                              </div>
-                            )}
-
-                          {message.data.navigationSteps &&
-                            message.data.navigationSteps.length > 0 && (
-                              <div className="flex flex-col gap-1 text-sm">
-                                <span className="font-medium">
-                                  Navigation steps:
-                                </span>
-                                <ol className="list-decimal list-inside space-y-1">
-                                  {message.data.navigationSteps.map(
-                                    (step, i) => (
-                                      <li key={i}>{step}</li>
-                                    ),
-                                  )}
-                                </ol>
-                              </div>
-                            )}
-
-                          {message.data.nearestFacilities &&
-                            message.data.nearestFacilities.length > 0 && (
-                              <div className="flex flex-col gap-1 text-sm">
-                                <span className="font-medium">
-                                  Nearest facilities:
-                                </span>
-                                {message.data.nearestFacilities.map(
-                                  (facility, i) => (
-                                    <div
-                                      key={i}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <span>
-                                        {getFacilityIcon(facility.type)}
-                                      </span>
-                                      <span>
-                                        {facility.name} - {facility.distance}
-                                      </span>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            )}
-
+                      {message.data && (
+                        <div className="mt-4 space-y-3">
+                          {message.data.estimatedWalkingTime && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="h-4 w-4" />
+                              <span>
+                                Estimated time:{" "}
+                                {message.data.estimatedWalkingTime} min
+                              </span>
+                            </div>
+                          )}
                           {message.data.crowdWarnings &&
                             message.data.crowdWarnings.length > 0 && (
                               <div className="flex items-start gap-2 text-sm text-destructive">
@@ -281,7 +155,6 @@ export function FanAssistant() {
                                 </div>
                               </div>
                             )}
-
                           {message.data.accessibilityNotes && (
                             <div className="flex items-start gap-2 text-sm">
                               <Accessibility className="h-4 w-4 mt-0.5" />
@@ -294,9 +167,8 @@ export function FanAssistant() {
                   </div>
                 </div>
               ))}
-
               {isLoading && (
-                <div className="flex gap-3 justify-start">
+                <div className="flex gap-3">
                   <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted">
                     <Bot className="h-4 w-4" />
                   </div>
@@ -327,8 +199,6 @@ export function FanAssistant() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about navigation, facilities, or accessibility..."
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1"
-                disabled={isLoading}
               />
               <Button onClick={handleSend} disabled={isLoading}>
                 <Send className="h-4 w-4" />
