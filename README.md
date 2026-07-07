@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StadiumOS AI
 
-## Getting Started
+AI-powered stadium intelligence platform for FIFA World Cup 2026.
 
-First, run the development server:
+## Problem Statement
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Stadiums hosting major events like the FIFA World Cup face significant challenges in:
+
+- Managing large crowds efficiently
+- Providing excellent fan experience
+- Ensuring accessibility for all fans
+- Making real-time operational decisions
+- Supporting volunteers with up-to-date information
+
+## Solution Overview
+
+StadiumOS AI provides three core AI-powered experiences:
+
+### 1. Fan Assistant AI
+
+- **Navigation Assistance**: Real-time routing considering crowd density
+- **Seat Guidance**: Step-by-step directions to seats
+- **Facility Discovery**: Find restrooms, food, first aid, and more
+- **Crowd-Aware Recommendations**: Avoid congested areas
+- **Accessibility Support**: Wheelchair accessible routes and facilities
+
+### 2. Operations Intelligence AI
+
+- **Real-time Dashboards**: Live crowd density, gate queues, weather data
+- **AI Recommendations**: Automated suggestions for operations management
+- **Analytics**: Visualize stadium metrics and trends
+
+### 3. Volunteer Assistant AI
+
+- **Emergency Procedures**: Step-by-step guidance for crises
+- **Accessibility Information**: How to assist fans with disabilities
+- **Fan Support**: Quick answers to common fan questions
+
+## Architecture
+
+```
+src/
+├── app/                          # Next.js app router
+│   ├── api/                      # API routes
+│   │   ├── fan-assistant/
+│   │   ├── operations/
+│   │   └── volunteer/
+│   ├── fan/                      # Fan Assistant page
+│   ├── operations/               # Operations Dashboard page
+│   ├── volunteer/                # Volunteer Assistant page
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Landing page
+├── components/
+│   ├── ui/                       # shadcn/ui components
+│   └── layout/                   # Layout components
+├── features/                     # Feature modules
+│   ├── fan-assistant/
+│   ├── operations-dashboard/
+│   └── volunteer-assistant/
+├── lib/
+│   ├── ai/                       # AI service layer
+│   └── database/                 # Database/simulated data
+└── types/                        # TypeScript types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js 15, TypeScript, TailwindCSS, shadcn/ui
+- **Visualization**: Recharts
+- **AI Integration**: OpenAI API (ready for integration)
+- **Database**: Supabase PostgreSQL (ready for integration)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup Instructions
 
-## Learn More
+1. **Install dependencies**:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Run the development server**:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+3. **Open your browser**:
+   Visit [http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Assumptions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- This version uses simulated data for demonstration purposes
+- AI responses are pre-programmed to handle common scenarios
+- For production, integrate with real OpenAI/Gemini API and Supabase database
+
+## Future Improvements
+
+- Real-time data streaming from stadium sensors
+- Multi-language support with automatic translation
+- Integration with ticketing systems
+- Mobile app companion
+- Predictive analytics for crowd flow
