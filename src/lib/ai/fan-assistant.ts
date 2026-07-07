@@ -27,13 +27,15 @@ export class FanAssistantService {
 
   private generateResponse(
     query: string,
-    context: any,
-    user: User,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _context: any,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _user: User,
   ): FanAssistantResponse {
     const lowerQuery = query.toLowerCase();
     let navigationInstructions = "";
     let estimatedWalkingTime = 8;
-    let crowdWarnings: string[] = [];
+    const crowdWarnings: string[] = [];
     let nearbyFacilities: Facility[] = [];
     let accessibilityNotes = "";
 

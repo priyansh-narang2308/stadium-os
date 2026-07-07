@@ -1,15 +1,16 @@
-import { VolunteerAssistantResponse, User } from "@/src/types";
+import { VolunteerAssistantResponse, User, Facility } from "@/src/types";
 import { FACILITIES } from "@/src/lib/database/simulated-data";
 
 export class VolunteerAssistantService {
   async getGuidance(
     volunteerQuery: string,
-    volunteer: User,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _volunteer: User,
   ): Promise<VolunteerAssistantResponse> {
     const lowerQuery = volunteerQuery.toLowerCase();
     let guidance = "";
     let steps: string[] = [];
-    let nearbyResources: any[] = [];
+    let nearbyResources: Facility[] = [];
 
     if (lowerQuery.includes("wheelchair")) {
       guidance = "Guide wheelchair users to the nearest accessible elevator.";

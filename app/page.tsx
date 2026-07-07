@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Menu, X, Star, Users, ChevronDown } from "lucide-react";
+import { ArrowRight, Menu, X, Star, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LogoIcon from "@/src/assets/logo-icon";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface HeroProps {
   titleLine1?: string;
@@ -57,7 +58,7 @@ export default function Hero({
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       />
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#F5F3EE]/90 via-[#F5F3EE]/70 to-[#F5F3EE]/95" />
+      <div className="absolute inset-0 z-0 bg-linear-to-b from-[#F5F3EE]/90 via-[#F5F3EE]/70 to-[#F5F3EE]/95" />
 
       {/* Floating Navbar */}
       <motion.header
@@ -73,30 +74,6 @@ export default function Hero({
             StadiumOS
           </span>
         </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => setActiveNav(link.label)}
-              className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                activeNav === link.label
-                  ? "text-gray-900"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {activeNav === link.label && (
-                <motion.div
-                  layoutId="activeNav"
-                  className="absolute inset-0 -z-10 rounded-full bg-orange-50/80 shadow-sm"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              {link.label}
-            </button>
-          ))}
-        </nav>
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
@@ -162,6 +139,39 @@ export default function Hero({
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           className="mx-auto flex w-full max-w-4xl flex-col items-center"
         >
+          {/* Social Proof */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
+          >
+            <div className="flex -space-x-2">
+              {PLACEHOLDER_AVATARS.map((avatar, index) => (
+                <div
+                  key={index}
+                  className="relative size-10 rounded-full border-2 border-white ring-2 ring-orange-500/20"
+                >
+                  <Image
+                    src={avatar}
+                    alt="User avatar"
+                    fill
+                    className="rounded-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col items-center sm:items-start">
+              <div className="flex items-center gap-1 text-orange-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="size-4 fill-current" />
+                ))}
+              </div>
+              <span className="mt-0.5 text-sm font-medium text-gray-700">
+                {socialProofText}
+              </span>
+            </div>
+          </motion.div>
           {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -170,7 +180,7 @@ export default function Hero({
             className="mb-6 text-center text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl"
           >
             {titleLine1}{" "}
-            <span className="bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
               {titleHighlight}
             </span>
             <br />
@@ -196,7 +206,7 @@ export default function Hero({
           >
             <Button
               size="lg"
-              className="h-14 w-full rounded-xl bg-orange-500 px-8 text-base font-medium text-white shadow-[0_4px_20px_rgba(249,115,22,0.35)] transition-all hover:bg-orange-600 hover:shadow-[0_6px_30px_rgba(249,115,22,0.45)] sm:w-auto"
+              className="h-14 w-full rounded-xl bg-orange-500 px-8 text-base font-medium text-white shadow-[0_4px_20px_rgba(249,115,22,0.35)] cursor-pointer transition-all hover:bg-orange-600 hover:shadow-[0_6px_30px_rgba(249,115,22,0.45)] sm:w-auto"
               onClick={() => router.push(primaryActionHref)}
             >
               {primaryActionText}
@@ -236,6 +246,19 @@ export default function Hero({
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+        className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-gray-500"
+      >
+        <span className="text-xs font-medium tracking-widest uppercase">
+          Scroll
+        </span>
+        <ChevronDown className="size-4 animate-bounce" />
+      </motion.div>
     </section>
   );
 }

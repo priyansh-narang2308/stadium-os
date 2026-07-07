@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Menu, X, Trophy, Users, Activity, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import Link from "next/link";
+import { Menu, X, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,16 +18,28 @@ export function SiteHeader() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Home
             </Link>
-            <Link href="/fan" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/fan"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Fan Assistant
             </Link>
-            <Link href="/operations" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/operations"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Operations
             </Link>
-            <Link href="/volunteer" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href="/volunteer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               Volunteer
             </Link>
           </nav>
@@ -38,22 +50,42 @@ export function SiteHeader() {
             className="md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </Button>
         </div>
 
         {isMenuOpen && (
           <nav className="md:hidden mt-4 pb-2 flex flex-col gap-4">
-            <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/"
+              className="text-muted-foreground hover:text-foreground transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Home
             </Link>
-            <Link href="/fan" className="text-muted-foreground hover:text-foreground transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/fan"
+              className="text-muted-foreground hover:text-foreground transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Fan Assistant
             </Link>
-            <Link href="/operations" className="text-muted-foreground hover:text-foreground transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/operations"
+              className="text-muted-foreground hover:text-foreground transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Operations
             </Link>
-            <Link href="/volunteer" className="text-muted-foreground hover:text-foreground transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/volunteer"
+              className="text-muted-foreground hover:text-foreground transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Volunteer
             </Link>
           </nav>
