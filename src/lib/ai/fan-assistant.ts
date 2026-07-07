@@ -1,18 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Facility, FanAssistantResponse, User } from "@/src/types";
+import { FanAssistantResponse, User } from "@/src/types";
 import {
   CROWD_DATA,
   GATE_DATA,
   FACILITIES,
 } from "@/src/lib/database/simulated-data";
+import { GoogleGenAI } from "@google/genai";
 
 export class FanAssistantService {
+  private ai: GoogleGenAI;
+
+  constructor() {
+    this.ai = new GoogleGenAI({});
+  }
+
   async processQuery(
     userQuery: string,
     user: User,
   ): Promise<FanAssistantResponse> {
     const context = this.buildContext(user);
-    const response = this.generateResponse(userQuery, context, user);
+    const response = await this.generateResponse(userQuery, context, user);
     return response;
   }
 
@@ -25,60 +32,62 @@ export class FanAssistantService {
     };
   }
 
-  private generateResponse(
+  private async generateResponse(
     query: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _context: any,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _user: User,
-  ): FanAssistantResponse {
-    const lowerQuery = query.toLowerCase();
-    let navigationInstructions = "";
-    let estimatedWalkingTime = 8;
-    const crowdWarnings: string[] = [];
-    let nearbyFacilities: Facility[] = [];
-    let accessibilityNotes = "";
+    context: any,
+    user: User,
+  ): Promise<FanAssistantResponse> {
+    const prompt = `You are a friendly stadium fan assistant. Help the user navigate and enjoy their stadium experience.
 
-    if (lowerQuery.includes("gate c") && lowerQuery.includes("block 124")) {
-      navigationInstructions =
-        "Gate C is currently crowded. Use East Concourse Route B.";
-      estimatedWalkingTime = 8;
-      crowdWarnings.push("Gate C density: 85%");
-      accessibilityNotes =
-        "Nearest accessible elevator (Elevator E1) available 120 meters ahead on East Concourse.";
-      nearbyFacilities = FACILITIES.filter((f) => f.type === "elevator");
-    } else if (
-      lowerQuery.includes("restroom") ||
-      lowerQuery.includes("bathroom")
-    ) {
-      navigationInstructions =
-        "Restrooms are available at Block 100, 2 minutes walk from your current location.";
-      estimatedWalkingTime = 2;
-      nearbyFacilities = FACILITIES.filter((f) => f.type === "restroom");
-    } else if (lowerQuery.includes("food") || lowerQuery.includes("eat")) {
-      navigationInstructions =
-        "Food Court North is available with an 8-minute wait.";
-      estimatedWalkingTime = 5;
-      nearbyFacilities = FACILITIES.filter((f) => f.type === "food");
-    } else if (
-      lowerQuery.includes("first aid") ||
-      lowerQuery.includes("medical")
-    ) {
-      navigationInstructions = "First Aid Station is near Gate A.";
-      estimatedWalkingTime = 4;
-      nearbyFacilities = FACILITIES.filter((f) => f.type === "first-aid");
-    } else {
-      navigationInstructions =
-        "How can I assist you with your stadium experience today?";
+Use the following context to answer:
+- Crowd Data: ${JSON.stringify(context.currentCrowdData)}
+- Gate Data: ${JSON.stringify(context.gateData)}
+- Available Facilities: ${JSON.stringify(context.facilities)}
+- User Accessibility Preferences: ${JSON.stringify(context.userPreferences)}
+
+User Query: "${query}"
+
+Respond with ONLY a JSON object in this EXACT format:
+{
+  "navigationInstructions": "string or null",
+  "estimatedWalkingTime": "number or null",
+  "crowdWarnings": ["string"],
+  "nearbyFacilities": [facility objects from context],
+  "accessibilityNotes": "string or null",
+  "rawResponse": "friendly natural language response"
+}
+
+Make sure rawResponse is friendly and conversational, and navigationInstructions gives clear directions if needed.`;
+
+    try {
+      const interaction = await this.ai.interactions.create({
+        model: "gemini-3.5-flash",
+        input: prompt,
+      });
+
+      const outputText = interaction.output_text || "";
+      const jsonMatch = outputText.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        const parsedResponse = JSON.parse(jsonMatch[0]);
+        return {
+          navigationInstructions:
+            parsedResponse.navigationInstructions || undefined,
+          estimatedWalkingTime:
+            parsedResponse.estimatedWalkingTime || undefined,
+          crowdWarnings: parsedResponse.crowdWarnings || [],
+          nearbyFacilities: parsedResponse.nearbyFacilities || [],
+          accessibilityNotes: parsedResponse.accessibilityNotes || undefined,
+          rawResponse: parsedResponse.rawResponse || outputText,
+        };
+      }
+    } catch (error) {
+      console.error("Error calling Google GenAI:", error);
     }
 
+    // Fallback to simple response if anything fails
     return {
-      navigationInstructions,
-      estimatedWalkingTime,
-      crowdWarnings,
-      nearbyFacilities,
-      accessibilityNotes,
-      rawResponse: `${navigationInstructions}${crowdWarnings.length > 0 ? `\n\nWarnings: ${crowdWarnings.join(", ")}` : ""}${accessibilityNotes ? `\n\n${accessibilityNotes}` : ""}${estimatedWalkingTime ? `\n\nEstimated arrival: ${estimatedWalkingTime} minutes.` : ""}`,
+      rawResponse: `How can I assist you with your stadium experience today?`,
     };
   }
 }

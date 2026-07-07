@@ -1,59 +1,61 @@
 import { VolunteerAssistantResponse, User, Facility } from "@/src/types";
 import { FACILITIES } from "@/src/lib/database/simulated-data";
+import { GoogleGenAI } from "@google/genai";
 
 export class VolunteerAssistantService {
+  private ai: GoogleGenAI;
+
+  constructor() {
+    this.ai = new GoogleGenAI({});
+  }
+
   async getGuidance(
     volunteerQuery: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _volunteer: User,
   ): Promise<VolunteerAssistantResponse> {
-    const lowerQuery = volunteerQuery.toLowerCase();
-    let guidance = "";
-    let steps: string[] = [];
-    let nearbyResources: Facility[] = [];
+    const prompt = `You are a helpful stadium volunteer assistant. Guide volunteers on how to assist fans.
 
-    if (lowerQuery.includes("wheelchair")) {
-      guidance = "Guide wheelchair users to the nearest accessible elevator.";
-      steps = [
-        "Direct fan to Elevator E1 (East Concourse) or E2 (West Concourse)",
-        "Ensure the path is clear of obstacles",
-        "Assist with elevator operation if needed",
-        "Escort to designated accessible seating area",
-      ];
-      nearbyResources = FACILITIES.filter((f) => f.type === "elevator");
-    } else if (
-      lowerQuery.includes("emergency") ||
-      lowerQuery.includes("evacuation")
-    ) {
-      guidance = "Follow emergency evacuation procedures immediately.";
-      steps = [
-        "Stay calm and direct fans to nearest exit",
-        "Avoid elevators - use stairs",
-        "Assist fans with disabilities",
-        "Gather at designated assembly points outside stadium",
-      ];
-    } else if (lowerQuery.includes("lost") || lowerQuery.includes("child")) {
-      guidance = "Lost child protocol activation.";
-      steps = [
-        "Notify stadium security immediately",
-        "Take the child to the nearest information desk",
-        "Gather identifying information",
-        "Stay with the child until parents/guardians arrive",
-      ];
-    } else {
-      guidance = "How can I help you assist fans today?";
-      steps = [
+Available Facilities: ${JSON.stringify(FACILITIES)}
+
+Volunteer Query: "${volunteerQuery}"
+
+Respond with ONLY a JSON object in this EXACT format:
+{
+  "guidance": "string",
+  "steps": ["string"],
+  "nearbyResources": [facility objects from context or empty array],
+  "emergencyContact": "Stadium Security: +1 (555) 123-4567"
+}
+
+Make sure guidance is clear and actionable, and steps are a numbered list of actions.`;
+
+    try {
+      const interaction = await this.ai.interactions.create({
+        model: "gemini-3.5-flash",
+        input: prompt,
+      });
+
+      const outputText = interaction.output_text || "";
+      const jsonMatch = outputText.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (error) {
+      console.error("Error calling Google GenAI:", error);
+    }
+
+    // Fallback response
+    return {
+      guidance: "How can I help you assist fans today?",
+      steps: [
         "Greet the fan politely",
         "Listen carefully to their question",
         "Provide clear directions",
         "Offer additional assistance if needed",
-      ];
-    }
-
-    return {
-      guidance,
-      steps,
-      nearbyResources,
+      ],
+      nearbyResources: [],
       emergencyContact: "Stadium Security: +1 (555) 123-4567",
     };
   }
