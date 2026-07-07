@@ -1,5 +1,9 @@
-import { OperationsRecommendation } from '@/src/types';
-import { GATE_DATA, CROWD_DATA, WEATHER_DATA } from '@/src/lib/database/simulated-data';
+import { OperationsRecommendation } from "@/src/types";
+import {
+  GATE_DATA,
+  CROWD_DATA,
+  WEATHER_DATA,
+} from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
 
 export class OperationsAssistantService {
@@ -10,7 +14,7 @@ export class OperationsAssistantService {
   }
 
   async analyzeOperations(
-    operatorInput: string
+    operatorInput: string,
   ): Promise<OperationsRecommendation[]> {
     const prompt = `You are a stadium operations assistant. Analyze the stadium data and provide actionable recommendations.
 
@@ -35,7 +39,7 @@ Provide 2-4 relevant recommendations based on the data and query.`;
 
     try {
       const interaction = await this.ai.interactions.create({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         input: prompt,
       });
 
@@ -52,11 +56,11 @@ Provide 2-4 relevant recommendations based on the data and query.`;
     // Fallback recommendations
     return [
       {
-        recommendation: 'Monitor East Concourse crowd levels.',
-        reasoning: 'Current density at 45%, approaching threshold.',
-        expectedImpact: 'Prevent overcrowding before it becomes an issue.',
-        priority: 'medium'
-      }
+        recommendation: "Monitor East Concourse crowd levels.",
+        reasoning: "Current density at 45%, approaching threshold.",
+        expectedImpact: "Prevent overcrowding before it becomes an issue.",
+        priority: "medium",
+      },
     ];
   }
 
@@ -64,7 +68,7 @@ Provide 2-4 relevant recommendations based on the data and query.`;
     return {
       gates: GATE_DATA,
       crowd: CROWD_DATA,
-      weather: WEATHER_DATA
+      weather: WEATHER_DATA,
     };
   }
 }

@@ -61,7 +61,7 @@ Make sure rawResponse is friendly and conversational, and navigationInstructions
 
     try {
       const interaction = await this.ai.interactions.create({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         input: prompt,
       });
 

@@ -32,7 +32,7 @@ Make sure guidance is clear and actionable, and steps are a numbered list of act
 
     try {
       const interaction = await this.ai.interactions.create({
-        model: "gemini-3.5-flash",
+        model: "gemini-flash-latest",
         input: prompt,
       });
 
