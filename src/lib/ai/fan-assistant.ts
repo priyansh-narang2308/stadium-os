@@ -5,6 +5,13 @@ import {
   FACILITIES,
 } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
+import { 
+  FAN_ASSISTANT_SYSTEM_PROMPT, 
+  FAN_ASSISTANT_RESPONSE_FORMAT 
+} from "@/src/lib/config/prompts";
+import { ExternalServiceError } from "@/src/lib/errors";
+import { logger } from "@/src/lib/logger";
+import { MAX_INPUT_LENGTH } from "@/src/lib/constants";
 
 interface ContextData {
   currentCrowdData: typeof CROWD_DATA;
@@ -33,8 +40,16 @@ export class FanAssistantService {
     userQuery: string,
     user: User,
   ): Promise<FanAssistantResponse> {
+    logger.info('Processing fan assistant query', { queryLength: userQuery.length });
+    
+    if (userQuery.length > MAX_INPUT_LENGTH) {
+      throw new Error(`Query exceeds maximum length of ${MAX_INPUT_LENGTH} characters`);
+    }
+
     const context = this.buildContext(user);
     const response = await this.generateResponse(userQuery, context);
+    
+    logger.info('Fan assistant query processed successfully');
     return response;
   }
 
@@ -51,7 +66,7 @@ export class FanAssistantService {
     query: string,
     context: ContextData,
   ): Promise<FanAssistantResponse> {
-    const prompt = `You are a friendly stadium fan assistant. Help the user navigate and enjoy their stadium experience.
+    const prompt = `${FAN_ASSISTANT_SYSTEM_PROMPT}
 
 Use the following context to answer:
 - Crowd Data: ${JSON.stringify(context.currentCrowdData)}
@@ -61,17 +76,7 @@ Use the following context to answer:
 
 User Query: "${query}"
 
-Respond with ONLY a JSON object in this EXACT format:
-{
-  "navigationInstructions": "string or null",
-  "estimatedWalkingTime": "number or null",
-  "crowdWarnings": ["string"],
-  "nearbyFacilities": [facility objects from context],
-  "accessibilityNotes": "string or null",
-  "rawResponse": "friendly natural language response"
-}
-
-Make sure rawResponse is friendly and conversational, and navigationInstructions gives clear directions if needed.`;
+${FAN_ASSISTANT_RESPONSE_FORMAT}`;
 
     try {
       const interaction = await this.ai.interactions.create({
@@ -94,10 +99,12 @@ Make sure rawResponse is friendly and conversational, and navigationInstructions
         };
       }
     } catch (error) {
-      console.error("Error calling Google GenAI:", error);
+      logger.error('Error calling Google GenAI for fan assistant', error as Error);
+      throw new ExternalServiceError('Google GenAI', 'Failed to generate AI response');
     }
 
     // Fallback to simple response if anything fails
+    logger.warn('Using fallback response for fan assistant');
     return {
       rawResponse: `How can I assist you with your stadium experience today?`,
     };
