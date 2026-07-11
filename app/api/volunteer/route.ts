@@ -11,14 +11,16 @@ import {
   sanitizeInput,
   validateContentType,
 } from "@/src/lib/security/middleware";
+import { toErrorResult, ValidationError } from "@/src/lib/errors";
+import { logger } from "@/src/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info('Volunteer assistant API request received');
+
     if (!validateContentType(request, ['application/json'])) {
-      const response = NextResponse.json(
-        { error: 'Invalid content type' },
-        { status: 415 }
-      );
+      const error = new ValidationError('Invalid content type');
+      const response = NextResponse.json(toErrorResult(error), { status: 415 });
       return addSecurityHeaders(response);
     }
 
@@ -34,10 +36,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validationResult = VolunteerRequestSchema.safeParse(body);
     if (!validationResult.success) {
-      const response = NextResponse.json(
-        { error: 'Invalid request', details: validationResult.error.issues },
-        { status: 400 }
-      );
+      const error = new ValidationError('Invalid request', validationResult.error.issues);
+      const response = NextResponse.json(toErrorResult(error), { status: 400 });
       return addSecurityHeaders(response);
     }
 
@@ -49,11 +49,12 @@ export async function POST(request: NextRequest) {
 
     const validatedResponse = VolunteerAssistantResponseSchema.parse(response);
     const apiResponse = NextResponse.json(validatedResponse);
+    logger.info('Volunteer assistant API request completed successfully');
     return addSecurityHeaders(apiResponse);
   } catch (error) {
-    console.error("Volunteer Assistant API error:", error);
+    logger.error('Volunteer Assistant API error', error as Error);
     const response = NextResponse.json(
-      { error: "Internal server error" },
+      toErrorResult(error),
       { status: 500 },
     );
     return addSecurityHeaders(response);

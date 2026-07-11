@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SkipLink } from "@/src/components/layout/skip-link";
 
 const inter = Inter({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -22,7 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <main className="flex-1">{children}</main>
+        <SkipLink />
+        <main id="main-content" className="flex-1">{children}</main>
       </body>
     </html>
   );

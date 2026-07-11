@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Activity, Users, Clock, Sun, Cloud, Rainbow } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,21 @@ interface ChartData {
   density: number;
 }
 
+const WeatherIcon = memo(({ condition }: { condition: DashboardData['weather']['condition'] }) => {
+  switch (condition) {
+    case "sunny":
+      return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
+    case "cloudy":
+      return <Cloud className="h-6 w-6 text-gray-500" aria-hidden="true" />;
+    case "rainy":
+      return <Rainbow className="h-6 w-6 text-blue-500" aria-hidden="true" />;
+    default:
+      return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
+  }
+});
+
+WeatherIcon.displayName = 'WeatherIcon';
+
 export function OperationsDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recommendations, setRecommendations] = useState<
@@ -87,6 +102,7 @@ export function OperationsDashboard() {
         },
         body: JSON.stringify({ input }),
       });
+
       const data = await response.json();
       setRecommendations(data.recommendations);
       setDashboardData(data.dashboardData);
@@ -107,19 +123,6 @@ export function OperationsDashboard() {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
       case "low":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    }
-  }, []);
-
-  const getWeatherIcon = useCallback((condition: string) => {
-    switch (condition) {
-      case "sunny":
-        return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
-      case "cloudy":
-        return <Cloud className="h-6 w-6 text-gray-500" aria-hidden="true" />;
-      case "rainy":
-        return <Rainbow className="h-6 w-6 text-blue-500" aria-hidden="true" />;
-      default:
-        return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
     }
   }, []);
 
@@ -171,7 +174,7 @@ export function OperationsDashboard() {
             </CardTitle>
             {dashboardData?.weather && (
               <div aria-hidden="true">
-                {getWeatherIcon(dashboardData.weather.condition)}
+                <WeatherIcon condition={dashboardData.weather.condition} />
               </div>
             )}
           </CardHeader>

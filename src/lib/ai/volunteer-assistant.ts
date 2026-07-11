@@ -1,6 +1,13 @@
 import { VolunteerAssistantResponse, Facility } from "@/src/types";
 import { FACILITIES } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
+import { 
+  VOLUNTEER_ASSISTANT_SYSTEM_PROMPT,
+  VOLUNTEER_ASSISTANT_RESPONSE_FORMAT 
+} from "@/src/lib/config/prompts";
+import { ExternalServiceError } from "@/src/lib/errors";
+import { logger } from "@/src/lib/logger";
+import { MAX_INPUT_LENGTH } from "@/src/lib/constants";
 
 interface AIResponse {
   guidance: string;
@@ -19,21 +26,19 @@ export class VolunteerAssistantService {
   async getGuidance(
     volunteerQuery: string,
   ): Promise<VolunteerAssistantResponse> {
-    const prompt = `You are a helpful stadium volunteer assistant. Guide volunteers on how to assist fans.
+    logger.info('Processing volunteer guidance query', { queryLength: volunteerQuery.length });
+    
+    if (volunteerQuery.length > MAX_INPUT_LENGTH) {
+      throw new Error(`Query exceeds maximum length of ${MAX_INPUT_LENGTH} characters`);
+    }
+
+    const prompt = `${VOLUNTEER_ASSISTANT_SYSTEM_PROMPT}
 
 Available Facilities: ${JSON.stringify(FACILITIES)}
 
 Volunteer Query: "${volunteerQuery}"
 
-Respond with ONLY a JSON object in this EXACT format:
-{
-  "guidance": "string",
-  "steps": ["string"],
-  "nearbyResources": [facility objects from context or empty array],
-  "emergencyContact": "Stadium Security: +1 (555) 123-4567"
-}
-
-Make sure guidance is clear and actionable, and steps are a numbered list of actions.`;
+${VOLUNTEER_ASSISTANT_RESPONSE_FORMAT}`;
 
     try {
       const interaction = await this.ai.interactions.create({
@@ -46,6 +51,7 @@ Make sure guidance is clear and actionable, and steps are a numbered list of act
 
       if (jsonMatch) {
         const parsedResponse: AIResponse = JSON.parse(jsonMatch[0]);
+        logger.info('Volunteer guidance processed successfully');
         return {
           guidance: parsedResponse.guidance,
           steps: parsedResponse.steps,
@@ -54,10 +60,12 @@ Make sure guidance is clear and actionable, and steps are a numbered list of act
         };
       }
     } catch (error) {
-      console.error("Error calling Google GenAI:", error);
+      logger.error('Error calling Google GenAI for volunteer assistant', error as Error);
+      throw new ExternalServiceError('Google GenAI', 'Failed to generate volunteer guidance');
     }
 
     // Fallback response
+    logger.warn('Using fallback response for volunteer assistant');
     return {
       guidance: "How can I help you assist fans today?",
       steps: [

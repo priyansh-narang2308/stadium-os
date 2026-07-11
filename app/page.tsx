@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import LogoIcon from "@/src/assets/logo-icon";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { getAnimationDuration } from "@/src/lib/utils/reduced-motion";
 
 interface HeroProps {
   titleLine1?: string;
@@ -65,7 +66,7 @@ export default function Hero({
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: getAnimationDuration(0.6), ease: "easeOut" }}
         className="relative z-50 mt-6 flex h-16 w-[calc(100%-2rem)] max-w-7xl items-center justify-between rounded-2xl bg-white/90 px-4 shadow-[0_2px_20px_rgba(0,0,0,0.06)] backdrop-blur-md sm:px-6"
         role="banner"
       >
@@ -107,6 +108,7 @@ export default function Hero({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: getAnimationDuration(0.6) }}
             id="mobile-navigation"
             className="absolute top-full left-0 mt-2 w-full overflow-hidden rounded-2xl bg-white/95 shadow-xl backdrop-blur-md md:hidden"
             role="navigation"
@@ -154,7 +156,7 @@ export default function Hero({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: getAnimationDuration(0.6), delay: 0.2 }}
             className="mb-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-6"
             aria-label="User testimonials"
           >
@@ -188,7 +190,7 @@ export default function Hero({
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            transition={{ duration: getAnimationDuration(0.8), delay: 0.3 }}
             className="mb-6 text-center text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-7xl"
             id="main-heading"
           >
@@ -204,7 +206,7 @@ export default function Hero({
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: getAnimationDuration(0.8), delay: 0.4 }}
             className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-gray-600 sm:text-lg md:text-xl"
             id="main-description"
           >
@@ -215,7 +217,7 @@ export default function Hero({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: getAnimationDuration(0.8), delay: 0.5 }}
             className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row sm:gap-4"
             role="group"
             aria-label="Main actions"
@@ -244,7 +246,7 @@ export default function Hero({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: getAnimationDuration(0.8), delay: 0.6 }}
             className="mt-12 flex flex-wrap items-center justify-center gap-3"
             role="list"
             aria-label="Key features"
@@ -271,7 +273,7 @@ export default function Hero({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.8, ease: "easeOut" }}
+        transition={{ duration: getAnimationDuration(0.6), delay: 0.8, ease: "easeOut" }}
         className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-gray-500"
         aria-hidden="true"
       >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   Send,
   User,
@@ -20,6 +20,102 @@ interface Message {
   content: string;
   data?: FanAssistantResponse;
 }
+
+const MessageBubble = memo(({ message }: { message: Message }) => (
+  <div
+    className={`flex gap-3 ${
+      message.role === "user" ? "justify-end" : "justify-start"
+    }`}
+    role="article"
+    aria-label={`${message.role} message`}
+  >
+    <div
+      className={`flex gap-3 max-w-[80%] ${
+        message.role === "user" ? "flex-row-reverse" : ""
+      }`}
+    >
+      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
+        {message.role === "user" ? (
+          <User className="h-4 w-4" />
+        ) : (
+          <Bot className="h-4 w-4" />
+        )}
+      </div>
+      <div
+        className={`rounded-lg p-4 ${
+          message.role === "user"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted"
+        }`}
+      >
+        <p className="whitespace-pre-line">{message.content}</p>
+        {message.data && (
+          <div className="mt-4 space-y-3" role="region" aria-label="Additional information">
+            {message.data.estimatedWalkingTime && (
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" aria-hidden="true" />
+                <span>
+                  Estimated time: {" "}
+                  {message.data.estimatedWalkingTime} min
+                </span>
+              </div>
+            )}
+            {message.data.crowdWarnings &&
+              message.data.crowdWarnings.length > 0 && (
+                <div className="flex items-start gap-2 text-sm text-destructive">
+                  <AlertTriangle className="h-4 w-4 mt-0.5" aria-hidden="true" />
+                  <div>
+                    {message.data.crowdWarnings.map(
+                      (warning, i) => (
+                        <div key={i}>{warning}</div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            {message.data.accessibilityNotes && (
+              <div className="flex items-start gap-2 text-sm">
+                <Accessibility className="h-4 w-4 mt-0.5" aria-hidden="true" />
+                <span>{message.data.accessibilityNotes}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+MessageBubble.displayName = 'MessageBubble';
+
+const LoadingIndicator = memo(() => (
+  <div className="flex gap-3" role="status" aria-live="polite" aria-label="Assistant is typing">
+    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
+      <Bot className="h-4 w-4" />
+    </div>
+    <div className="rounded-lg p-4 bg-muted">
+      <div className="flex gap-1">
+        <div
+          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+          style={{ animationDelay: "0ms" }}
+          aria-hidden="true"
+        />
+        <div
+          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+          style={{ animationDelay: "150ms" }}
+          aria-hidden="true"
+        />
+        <div
+          className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+          style={{ animationDelay: "300ms" }}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  </div>
+));
+
+LoadingIndicator.displayName = 'LoadingIndicator';
 
 export function FanAssistant() {
   const [messages, setMessages] = useState<Message[]>([
@@ -116,96 +212,9 @@ export function FanAssistant() {
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4" role="log" aria-live="polite" aria-label="Chat messages">
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-3 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                  role="article"
-                  aria-label={`${message.role} message`}
-                >
-                  <div
-                    className={`flex gap-3 max-w-[80%] ${
-                      message.role === "user" ? "flex-row-reverse" : ""
-                    }`}
-                  >
-                    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
-                      {message.role === "user" ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div
-                      className={`rounded-lg p-4 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p className="whitespace-pre-line">{message.content}</p>
-                      {message.data && (
-                        <div className="mt-4 space-y-3" role="region" aria-label="Additional information">
-                          {message.data.estimatedWalkingTime && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Clock className="h-4 w-4" aria-hidden="true" />
-                              <span>
-                                Estimated time: {" "}
-                                {message.data.estimatedWalkingTime} min
-                              </span>
-                            </div>
-                          )}
-                          {message.data.crowdWarnings &&
-                            message.data.crowdWarnings.length > 0 && (
-                              <div className="flex items-start gap-2 text-sm text-destructive">
-                                <AlertTriangle className="h-4 w-4 mt-0.5" aria-hidden="true" />
-                                <div>
-                                  {message.data.crowdWarnings.map(
-                                    (warning, i) => (
-                                      <div key={i}>{warning}</div>
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          {message.data.accessibilityNotes && (
-                            <div className="flex items-start gap-2 text-sm">
-                              <Accessibility className="h-4 w-4 mt-0.5" aria-hidden="true" />
-                              <span>{message.data.accessibilityNotes}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <MessageBubble key={index} message={message} />
               ))}
-              {isLoading && (
-                <div className="flex gap-3" role="status" aria-live="polite" aria-label="Assistant is typing">
-                  <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <div className="rounded-lg p-4 bg-muted">
-                    <div className="flex gap-1">
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+              {isLoading && <LoadingIndicator />}
             </div>
           </ScrollArea>
           <div className="p-4 border-t">

@@ -8,14 +8,16 @@ import {
   sanitizeInput,
   validateContentType,
 } from "@/src/lib/security/middleware";
+import { toErrorResult, ValidationError } from "@/src/lib/errors";
+import { logger } from "@/src/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info('Operations API request received');
+
     if (!validateContentType(request, ['application/json'])) {
-      const response = NextResponse.json(
-        { error: 'Invalid content type' },
-        { status: 415 }
-      );
+      const error = new ValidationError('Invalid content type');
+      const response = NextResponse.json(toErrorResult(error), { status: 415 });
       return addSecurityHeaders(response);
     }
 
@@ -31,10 +33,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validationResult = OperationsRequestSchema.safeParse(body);
     if (!validationResult.success) {
-      const response = NextResponse.json(
-        { error: 'Invalid request', details: validationResult.error.issues },
-        { status: 400 }
-      );
+      const error = new ValidationError('Invalid request', validationResult.error.issues);
+      const response = NextResponse.json(toErrorResult(error), { status: 400 });
       return addSecurityHeaders(response);
     }
 
@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
     const dashboardData = service.getDashboardData();
 
     const response = NextResponse.json({ recommendations, dashboardData });
+    logger.info('Operations API request completed successfully');
     return addSecurityHeaders(response);
   } catch (error) {
-    console.error("Operations API error:", error);
+    logger.error('Operations API error', error as Error);
     const response = NextResponse.json(
-      { error: "Internal server error" },
+      toErrorResult(error),
       { status: 500 },
     );
     return addSecurityHeaders(response);
@@ -59,6 +60,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    logger.info('Operations dashboard data request received');
+
     const clientId = getClientIdentifier(request);
     if (!rateLimit(clientId)) {
       const response = NextResponse.json(
@@ -71,11 +74,12 @@ export async function GET(request: NextRequest) {
     const service = new OperationsAssistantService();
     const dashboardData = service.getDashboardData();
     const response = NextResponse.json(dashboardData);
+    logger.info('Operations dashboard data request completed successfully');
     return addSecurityHeaders(response);
   } catch (error) {
-    console.error("Operations API error:", error);
+    logger.error('Operations GET API error', error as Error);
     const response = NextResponse.json(
-      { error: "Internal server error" },
+      toErrorResult(error),
       { status: 500 },
     );
     return addSecurityHeaders(response);
