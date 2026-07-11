@@ -1,4 +1,4 @@
-import { OperationsRecommendation } from "@/src/types";
+import { OperationsRecommendation, PriorityLevel } from "@/src/types";
 import {
   GATE_DATA,
   CROWD_DATA,
@@ -10,7 +10,7 @@ interface AIRecommendation {
   recommendation: string;
   reasoning: string;
   expectedImpact: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority: PriorityLevel;
 }
 
 export class OperationsAssistantService {

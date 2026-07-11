@@ -122,7 +122,7 @@ describe('Simulated Data', () => {
     });
 
     it('should return empty array for non-existent type', () => {
-      const result = getFacilitiesByType('nonexistent' as any);
+      const result = getFacilitiesByType('nonexistent' as 'restroom' | 'food' | 'merchandise' | 'first-aid' | 'entrance' | 'exit' | 'elevator' | 'escalator');
       expect(result).toEqual([]);
     });
 

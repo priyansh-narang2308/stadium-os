@@ -23,7 +23,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { StatCard } from "@/src/components/layout/stat-card";
-import { OperationsRecommendation } from "@/src/types";
+import { OperationsRecommendation, PriorityLevel } from "@/src/types";
 import { Badge } from "@/components/ui/badge";
 
 interface DashboardData {
@@ -64,19 +64,18 @@ export function OperationsDashboard() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/operations");
-      const data: DashboardData = await response.json();
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/operations");
+        const data: DashboardData = await response.json();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     setIsLoading(true);
@@ -98,7 +97,7 @@ export function OperationsDashboard() {
     }
   }, [input]);
 
-  const getPriorityColor = useCallback((priority: string) => {
+  const getPriorityColor = useCallback((priority: PriorityLevel) => {
     switch (priority) {
       case "critical":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
@@ -106,7 +105,7 @@ export function OperationsDashboard() {
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
       case "medium":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      default:
+      case "low":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
   }, []);
@@ -227,7 +226,7 @@ export function OperationsDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dashboardData?.gates?.map((gate: any, index: number) => (
+                {dashboardData?.gates?.map((gate: DashboardData['gates'][number], index: number) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {gate.gateName}

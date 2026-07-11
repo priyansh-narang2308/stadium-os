@@ -345,7 +345,12 @@ export type TranslationKey = keyof typeof translations.en;
 
 export function getTranslation(language: Language = 'en', key: string): string {
   const langTranslations = translations[language] || translations.en;
-  return key.split('.').reduce((obj, k) => obj?.[k], langTranslations as any) || key;
+  const keys = key.split('.');
+  let result: unknown = langTranslations;
+  for (const k of keys) {
+    result = (result as Record<string, unknown>)?.[k];
+  }
+  return typeof result === 'string' ? result : key;
 }
 
 export function formatTranslation(template: string, values: Record<string, string>): string {

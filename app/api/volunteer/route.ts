@@ -41,18 +41,11 @@ export async function POST(request: NextRequest) {
       return addSecurityHeaders(response);
     }
 
-    const { query, user } = validationResult.data;
+    const { query } = validationResult.data;
     const sanitizedQuery = sanitizeInput(query);
 
     const service = new VolunteerAssistantService();
-    const response = await service.getGuidance(
-      sanitizedQuery,
-      user || {
-        id: "volunteer-001",
-        role: "volunteer",
-        language: "en",
-      },
-    );
+    const response = await service.getGuidance(sanitizedQuery);
 
     const validatedResponse = VolunteerAssistantResponseSchema.parse(response);
     const apiResponse = NextResponse.json(validatedResponse);

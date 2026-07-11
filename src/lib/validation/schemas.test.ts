@@ -189,7 +189,7 @@ describe('Validation Schemas', () => {
           recommendation: 'Test',
           reasoning: 'Test',
           expectedImpact: 'Test',
-          priority: 'invalid' as any,
+          priority: 'invalid' as 'low' | 'medium' | 'high' | 'critical',
         })
       ).toThrow();
     });

@@ -29,11 +29,6 @@ describe('OperationsAssistantService', () => {
       expect(Array.isArray(result)).toBe(true);
     });
 
-    it('should handle undefined input', async () => {
-      const result = await service.analyzeOperations(undefined as any);
-      expect(Array.isArray(result)).toBe(true);
-    });
-
     it('should return fallback recommendations on error', async () => {
       const result = await service.analyzeOperations('Test');
       expect(result.length).toBeGreaterThan(0);

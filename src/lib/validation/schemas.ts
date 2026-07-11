@@ -31,27 +31,40 @@ export const VolunteerRequestSchema = z.object({
   user: UserSchema.optional(),
 });
 
+// Facility schema
+export const FacilitySchema = z.object({
+  id: z.string(),
+  stadiumId: z.string(),
+  type: z.enum(['restroom', 'food', 'merchandise', 'first-aid', 'entrance', 'exit', 'elevator', 'escalator']),
+  name: z.string(),
+  location: z.string(),
+  accessibilityAvailable: z.boolean(),
+  currentWaitTime: z.number().optional(),
+});
+
 // Response schemas
 export const FanAssistantResponseSchema = z.object({
   navigationInstructions: z.string().nullable().optional(),
   estimatedWalkingTime: z.number().nullable().optional(),
   crowdWarnings: z.array(z.string()).optional(),
-  nearbyFacilities: z.array(z.any()).optional(),
+  nearbyFacilities: z.array(FacilitySchema).optional(),
   accessibilityNotes: z.string().nullable().optional(),
   rawResponse: z.string(),
 });
+
+export const PriorityLevelSchema = z.enum(['low', 'medium', 'high', 'critical']);
 
 export const OperationsRecommendationSchema = z.object({
   recommendation: z.string(),
   reasoning: z.string(),
   expectedImpact: z.string(),
-  priority: z.enum(['low', 'medium', 'high', 'critical']),
+  priority: PriorityLevelSchema,
 });
 
 export const VolunteerAssistantResponseSchema = z.object({
   guidance: z.string(),
   steps: z.array(z.string()),
-  nearbyResources: z.array(z.any()).optional(),
+  nearbyResources: z.array(FacilitySchema).optional(),
   emergencyContact: z.string().optional(),
 });
 

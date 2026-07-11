@@ -34,7 +34,7 @@ export class FanAssistantService {
     user: User,
   ): Promise<FanAssistantResponse> {
     const context = this.buildContext(user);
-    const response = await this.generateResponse(userQuery, context, user);
+    const response = await this.generateResponse(userQuery, context);
     return response;
   }
 
@@ -50,7 +50,6 @@ export class FanAssistantService {
   private async generateResponse(
     query: string,
     context: ContextData,
-    user: User,
   ): Promise<FanAssistantResponse> {
     const prompt = `You are a friendly stadium fan assistant. Help the user navigate and enjoy their stadium experience.
 

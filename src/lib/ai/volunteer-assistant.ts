@@ -1,4 +1,4 @@
-import { VolunteerAssistantResponse, User, Facility } from "@/src/types";
+import { VolunteerAssistantResponse, Facility } from "@/src/types";
 import { FACILITIES } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
 
@@ -18,7 +18,6 @@ export class VolunteerAssistantService {
 
   async getGuidance(
     volunteerQuery: string,
-    user: User,
   ): Promise<VolunteerAssistantResponse> {
     const prompt = `You are a helpful stadium volunteer assistant. Guide volunteers on how to assist fans.
 

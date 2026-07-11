@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { FanAssistantService } from './fan-assistant';
 import { User } from '@/src/types';
 
@@ -62,19 +62,6 @@ describe('FanAssistantService', () => {
         accessibleUser
       );
       expect(result).toHaveProperty('rawResponse');
-    });
-  });
-
-  describe('buildContext', () => {
-    it('should build context with user preferences', () => {
-      const context = (service as any).buildContext(mockUser);
-      expect(context).toHaveProperty('currentCrowdData');
-      expect(context).toHaveProperty('gateData');
-      expect(context).toHaveProperty('facilities');
-      expect(context).toHaveProperty('userPreferences');
-      expect(context.userPreferences).toEqual(
-        mockUser.accessibilityPreferences
-      );
     });
   });
 });

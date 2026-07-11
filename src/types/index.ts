@@ -1,14 +1,16 @@
 export type UserRole = "fan" | "operator" | "volunteer";
 
+export interface AccessibilityPreferences {
+  wheelchair: boolean;
+  visualImpairment: boolean;
+  hearingImpairment: boolean;
+}
+
 export interface User {
   id: string;
   role: UserRole;
   language: string;
-  accessibilityPreferences?: {
-    wheelchair: boolean;
-    visualImpairment: boolean;
-    hearingImpairment: boolean;
-  };
+  accessibilityPreferences?: AccessibilityPreferences;
 }
 
 export interface Stadium {
@@ -81,11 +83,13 @@ export interface FanAssistantResponse {
   rawResponse: string;
 }
 
+export type PriorityLevel = "low" | "medium" | "high" | "critical";
+
 export interface OperationsRecommendation {
   recommendation: string;
   reasoning: string;
   expectedImpact: string;
-  priority: "low" | "medium" | "high" | "critical";
+  priority: PriorityLevel;
 }
 
 export interface VolunteerAssistantResponse {
