@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Shield, User, Bot, CheckCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,14 +8,14 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { VolunteerAssistantResponse } from "@/src/types";
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  data?: VolunteerAssistantResponse;
+}
+
 export function VolunteerAssistant() {
-  const [messages, setMessages] = useState<
-    {
-      role: "user" | "assistant";
-      content: string;
-      data?: VolunteerAssistantResponse;
-    }[]
-  >([
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content: "Hello Volunteer! How can I help you assist fans today?",
@@ -24,10 +24,10 @@ export function VolunteerAssistant() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage = { role: "user" as const, content: input };
+    const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -61,7 +61,17 @@ export function VolunteerAssistant() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    [handleSend]
+  );
 
   const exampleQueries = [
     "Where should I guide wheelchair users?",
@@ -72,14 +82,14 @@ export function VolunteerAssistant() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <header className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Volunteer Assistant AI</h1>
           <p className="text-muted-foreground">
             Your guide for assisting fans and handling stadium situations.
           </p>
-        </div>
+        </header>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <section className="grid md:grid-cols-2 gap-6 mb-8" aria-label="Example queries">
           {exampleQueries.map((query, index) => (
             <Button
               key={index}
@@ -88,34 +98,37 @@ export function VolunteerAssistant() {
               onClick={() => {
                 setInput(query);
               }}
+              aria-label={`Use example query: ${query}`}
             >
               {query}
             </Button>
           ))}
-        </div>
+        </section>
 
         <Card className="h-150 flex flex-col">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+              <Shield className="h-5 w-5" aria-hidden="true" />
               Volunteer Chat
             </CardTitle>
           </CardHeader>
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div className="space-y-4" role="log" aria-live="polite" aria-label="Chat messages">
               {messages.map((message, index) => (
                 <div
                   key={index}
                   className={`flex gap-3 ${
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
+                  role="article"
+                  aria-label={`${message.role} message`}
                 >
                   <div
                     className={`flex gap-3 max-w-[80%] ${
                       message.role === "user" ? "flex-row-reverse" : ""
                     }`}
                   >
-                    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted">
+                    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
                       {message.role === "user" ? (
                         <User className="h-4 w-4" />
                       ) : (
@@ -131,7 +144,7 @@ export function VolunteerAssistant() {
                     >
                       <p>{message.content}</p>
                       {message.data && (
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-4 space-y-3" role="region" aria-label="Additional information">
                           {message.data.steps &&
                             message.data.steps.length > 0 && (
                               <div className="space-y-2">
@@ -142,7 +155,7 @@ export function VolunteerAssistant() {
                                       key={i}
                                       className="flex items-start gap-2"
                                     >
-                                      <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" />
+                                      <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" aria-hidden="true" />
                                       {step}
                                     </li>
                                   ))}
@@ -151,7 +164,7 @@ export function VolunteerAssistant() {
                             )}
                           {message.data.emergencyContact && (
                             <div className="flex items-center gap-2 text-sm border-t pt-3 mt-3">
-                              <Phone className="h-4 w-4" />
+                              <Phone className="h-4 w-4" aria-hidden="true" />
                               <span>
                                 Emergency: {message.data.emergencyContact}
                               </span>
@@ -164,8 +177,8 @@ export function VolunteerAssistant() {
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-3">
-                  <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted">
+                <div className="flex gap-3" role="status" aria-live="polite" aria-label="Assistant is typing">
+                  <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
                     <Bot className="h-4 w-4" />
                   </div>
                   <div className="rounded-lg p-4 bg-muted">
@@ -173,14 +186,17 @@ export function VolunteerAssistant() {
                       <div
                         className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
                         style={{ animationDelay: "0ms" }}
+                        aria-hidden="true"
                       />
                       <div
                         className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
                         style={{ animationDelay: "150ms" }}
+                        aria-hidden="true"
                       />
                       <div
                         className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
                         style={{ animationDelay: "300ms" }}
+                        aria-hidden="true"
                       />
                     </div>
                   </div>
@@ -194,9 +210,10 @@ export function VolunteerAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about procedures, accessibility, or fan support..."
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={handleKeyDown}
+                aria-label="Ask a question"
               />
-              <Button onClick={handleSend} disabled={isLoading}>
+              <Button onClick={handleSend} disabled={isLoading} aria-label="Send message">
                 Send
               </Button>
             </div>

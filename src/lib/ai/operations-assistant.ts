@@ -6,6 +6,13 @@ import {
 } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
 
+interface AIRecommendation {
+  recommendation: string;
+  reasoning: string;
+  expectedImpact: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+}
+
 export class OperationsAssistantService {
   private ai: GoogleGenAI;
 
@@ -47,7 +54,8 @@ Provide 2-4 relevant recommendations based on the data and query.`;
       const jsonMatch = outputText.match(/\[[\s\S]*\]/);
 
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsedResponse: AIRecommendation[] = JSON.parse(jsonMatch[0]);
+        return parsedResponse;
       }
     } catch (error) {
       console.error("Error calling Google GenAI:", error);

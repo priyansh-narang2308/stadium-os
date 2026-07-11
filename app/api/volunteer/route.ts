@@ -1,18 +1,52 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { VolunteerAssistantService } from "@/src/lib/ai/volunteer-assistant";
+import { 
+  VolunteerRequestSchema,
+  VolunteerAssistantResponseSchema 
+} from "@/src/lib/validation/schemas";
+import {
+  rateLimit,
+  getClientIdentifier,
+  addSecurityHeaders,
+  sanitizeInput,
+  validateContentType,
+} from "@/src/lib/security/middleware";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { query, user } = body;
-
-    if (!query) {
-      return NextResponse.json({ error: "Query is required" }, { status: 400 });
+    if (!validateContentType(request, ['application/json'])) {
+      const response = NextResponse.json(
+        { error: 'Invalid content type' },
+        { status: 415 }
+      );
+      return addSecurityHeaders(response);
     }
+
+    const clientId = getClientIdentifier(request);
+    if (!rateLimit(clientId)) {
+      const response = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      return addSecurityHeaders(response);
+    }
+
+    const body = await request.json();
+    const validationResult = VolunteerRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      const response = NextResponse.json(
+        { error: 'Invalid request', details: validationResult.error.issues },
+        { status: 400 }
+      );
+      return addSecurityHeaders(response);
+    }
+
+    const { query, user } = validationResult.data;
+    const sanitizedQuery = sanitizeInput(query);
 
     const service = new VolunteerAssistantService();
     const response = await service.getGuidance(
-      query,
+      sanitizedQuery,
       user || {
         id: "volunteer-001",
         role: "volunteer",
@@ -20,12 +54,15 @@ export async function POST(request: Request) {
       },
     );
 
-    return NextResponse.json(response);
+    const validatedResponse = VolunteerAssistantResponseSchema.parse(response);
+    const apiResponse = NextResponse.json(validatedResponse);
+    return addSecurityHeaders(apiResponse);
   } catch (error) {
     console.error("Volunteer Assistant API error:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
     );
+    return addSecurityHeaders(response);
   }
 }

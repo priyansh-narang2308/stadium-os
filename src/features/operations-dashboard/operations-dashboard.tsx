@@ -1,8 +1,6 @@
-/* eslint-disable react-hooks/immutability */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Activity, Users, Clock, Sun, Cloud, Rainbow } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,29 +26,59 @@ import { StatCard } from "@/src/components/layout/stat-card";
 import { OperationsRecommendation } from "@/src/types";
 import { Badge } from "@/components/ui/badge";
 
+interface DashboardData {
+  gates: Array<{
+    id: string;
+    stadiumId: string;
+    gateName: string;
+    queueLength: number;
+    estimatedWaitTime: number;
+    openLanes: number;
+    timestamp: Date;
+  }>;
+  crowd: Array<{
+    id: string;
+    stadiumId: string;
+    area: string;
+    densityPercentage: number;
+    timestamp: Date;
+  }>;
+  weather: {
+    stadiumId: string;
+    temperature: number;
+    condition: "sunny" | "cloudy" | "rainy" | "stormy";
+    windSpeed: number;
+  };
+}
+
+interface ChartData {
+  name: string;
+  density: number;
+}
+
 export function OperationsDashboard() {
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [recommendations, setRecommendations] = useState<
     OperationsRecommendation[]
   >([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const response = await fetch("/api/operations");
-      const data = await response.json();
+      const data: DashboardData = await response.json();
       setDashboardData(data);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     }
-  };
+  }, []);
 
-  const handleAnalyze = async () => {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAnalyze = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/operations", {
@@ -68,9 +96,9 @@ export function OperationsDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input]);
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = useCallback((priority: string) => {
     switch (priority) {
       case "critical":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
@@ -81,42 +109,45 @@ export function OperationsDashboard() {
       default:
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
-  };
+  }, []);
 
-  const getWeatherIcon = (condition: string) => {
+  const getWeatherIcon = useCallback((condition: string) => {
     switch (condition) {
       case "sunny":
-        return <Sun className="h-6 w-6 text-yellow-500" />;
+        return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
       case "cloudy":
-        return <Cloud className="h-6 w-6 text-gray-500" />;
+        return <Cloud className="h-6 w-6 text-gray-500" aria-hidden="true" />;
       case "rainy":
-        return <Rainbow className="h-6 w-6 text-blue-500" />;
+        return <Rainbow className="h-6 w-6 text-blue-500" aria-hidden="true" />;
       default:
-        return <Sun className="h-6 w-6 text-yellow-500" />;
+        return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
     }
-  };
+  }, []);
 
-  const chartData =
-    dashboardData?.crowd?.map((item: any) => ({
-      name: item.area,
-      density: item.densityPercentage,
-    })) || [];
+  const chartData = useMemo<ChartData[]>(
+    () =>
+      dashboardData?.crowd?.map((item) => ({
+        name: item.area,
+        density: item.densityPercentage,
+      })) || [],
+    [dashboardData?.crowd],
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+    <main className="container mx-auto px-4 py-8" role="main">
+      <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Operations Command Center</h1>
         <p className="text-muted-foreground">
           Real-time stadium intelligence and AI-powered recommendations.
         </p>
-      </div>
+      </header>
 
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
+      <section className="grid md:grid-cols-4 gap-6 mb-8" aria-label="Key metrics">
         <StatCard
           title="Total Attendance"
           value="52,418"
           subtitle="65.5% capacity"
-          icon={<Users className="h-5 w-5" />}
+          icon={<Users className="h-5 w-5" aria-hidden="true" />}
           trend="up"
           trendValue="+12% from last hour"
         />
@@ -124,7 +155,7 @@ export function OperationsDashboard() {
           title="Avg Wait Time"
           value="12 min"
           subtitle="Gate A"
-          icon={<Clock className="h-5 w-5" />}
+          icon={<Clock className="h-5 w-5" aria-hidden="true" />}
           trend="up"
           trendValue="+4 min"
         />
@@ -132,15 +163,18 @@ export function OperationsDashboard() {
           title="Active Zones"
           value="3"
           subtitle="High density"
-          icon={<Activity className="h-5 w-5" />}
+          icon={<Activity className="h-5 w-5" aria-hidden="true" />}
         />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Weather
             </CardTitle>
-            {dashboardData?.weather &&
-              getWeatherIcon(dashboardData.weather.condition)}
+            {dashboardData?.weather && (
+              <div aria-hidden="true">
+                {getWeatherIcon(dashboardData.weather.condition)}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -151,7 +185,7 @@ export function OperationsDashboard() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
         <Card className="lg:col-span-2">
@@ -261,6 +295,6 @@ export function OperationsDashboard() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 }

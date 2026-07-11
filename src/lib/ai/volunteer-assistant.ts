@@ -2,6 +2,13 @@ import { VolunteerAssistantResponse, User, Facility } from "@/src/types";
 import { FACILITIES } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
 
+interface AIResponse {
+  guidance: string;
+  steps: string[];
+  nearbyResources: Facility[];
+  emergencyContact: string;
+}
+
 export class VolunteerAssistantService {
   private ai: GoogleGenAI;
 
@@ -11,8 +18,7 @@ export class VolunteerAssistantService {
 
   async getGuidance(
     volunteerQuery: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _volunteer: User,
+    user: User,
   ): Promise<VolunteerAssistantResponse> {
     const prompt = `You are a helpful stadium volunteer assistant. Guide volunteers on how to assist fans.
 
@@ -40,7 +46,13 @@ Make sure guidance is clear and actionable, and steps are a numbered list of act
       const jsonMatch = outputText.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const parsedResponse: AIResponse = JSON.parse(jsonMatch[0]);
+        return {
+          guidance: parsedResponse.guidance,
+          steps: parsedResponse.steps,
+          nearbyResources: parsedResponse.nearbyResources,
+          emergencyContact: parsedResponse.emergencyContact,
+        };
       }
     } catch (error) {
       console.error("Error calling Google GenAI:", error);

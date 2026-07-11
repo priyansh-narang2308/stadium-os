@@ -1,11 +1,26 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { FanAssistantResponse, User } from "@/src/types";
+import { FanAssistantResponse, User, Facility } from "@/src/types";
 import {
   CROWD_DATA,
   GATE_DATA,
   FACILITIES,
 } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
+
+interface ContextData {
+  currentCrowdData: typeof CROWD_DATA;
+  gateData: typeof GATE_DATA;
+  facilities: typeof FACILITIES;
+  userPreferences: User['accessibilityPreferences'];
+}
+
+interface AIResponse {
+  navigationInstructions?: string | null;
+  estimatedWalkingTime?: number | null;
+  crowdWarnings?: string[];
+  nearbyFacilities?: Facility[];
+  accessibilityNotes?: string | null;
+  rawResponse: string;
+}
 
 export class FanAssistantService {
   private ai: GoogleGenAI;
@@ -23,7 +38,7 @@ export class FanAssistantService {
     return response;
   }
 
-  private buildContext(user: User) {
+  private buildContext(user: User): ContextData {
     return {
       currentCrowdData: CROWD_DATA,
       gateData: GATE_DATA,
@@ -34,7 +49,7 @@ export class FanAssistantService {
 
   private async generateResponse(
     query: string,
-    context: any,
+    context: ContextData,
     user: User,
   ): Promise<FanAssistantResponse> {
     const prompt = `You are a friendly stadium fan assistant. Help the user navigate and enjoy their stadium experience.
@@ -69,12 +84,10 @@ Make sure rawResponse is friendly and conversational, and navigationInstructions
       const jsonMatch = outputText.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {
-        const parsedResponse = JSON.parse(jsonMatch[0]);
+        const parsedResponse: AIResponse = JSON.parse(jsonMatch[0]);
         return {
-          navigationInstructions:
-            parsedResponse.navigationInstructions || undefined,
-          estimatedWalkingTime:
-            parsedResponse.estimatedWalkingTime || undefined,
+          navigationInstructions: parsedResponse.navigationInstructions || undefined,
+          estimatedWalkingTime: parsedResponse.estimatedWalkingTime || undefined,
           crowdWarnings: parsedResponse.crowdWarnings || [],
           nearbyFacilities: parsedResponse.nearbyFacilities || [],
           accessibilityNotes: parsedResponse.accessibilityNotes || undefined,
