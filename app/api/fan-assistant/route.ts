@@ -4,9 +4,8 @@ import {
   FanAssistantRequestSchema,
   FanAssistantResponseSchema 
 } from "@/src/lib/validation/schemas";
-import {
+import { 
   rateLimit,
-  getRateLimitHeaders,
   getClientIdentifier,
   addSecurityHeaders,
   sanitizeInput,

@@ -9,9 +9,9 @@ import {
   OPERATIONS_ASSISTANT_SYSTEM_PROMPT,
   OPERATIONS_ASSISTANT_RESPONSE_FORMAT 
 } from "@/src/lib/config/prompts";
-import { ExternalServiceError } from "@/src/lib/errors";
 import { logger } from "@/src/lib/logger";
 import { MAX_QUERY_LENGTH } from "@/src/lib/constants";
+import { apiCache } from "@/src/lib/utils/cache";
 
 interface AIRecommendation {
   recommendation: string;
@@ -23,8 +23,8 @@ interface AIRecommendation {
 export class OperationsAssistantService {
   private ai: GoogleGenAI;
 
-  constructor() {
-    this.ai = new GoogleGenAI({});
+  constructor(ai?: GoogleGenAI) {
+    this.ai = ai || new GoogleGenAI({});
   }
 
   async analyzeOperations(
@@ -34,6 +34,13 @@ export class OperationsAssistantService {
     
     if (operatorInput.length > MAX_QUERY_LENGTH) {
       throw new Error(`Input exceeds maximum length of ${MAX_QUERY_LENGTH} characters`);
+    }
+
+    const cacheKey = `ops:${operatorInput}`;
+    const cached = apiCache.get(cacheKey) as OperationsRecommendation[] | null;
+    if (cached) {
+      logger.info('Returning cached operations analysis');
+      return cached;
     }
 
     const prompt = `${OPERATIONS_ASSISTANT_SYSTEM_PROMPT}
@@ -59,11 +66,12 @@ ${OPERATIONS_ASSISTANT_RESPONSE_FORMAT}`;
       if (jsonMatch) {
         const parsedResponse: AIRecommendation[] = JSON.parse(jsonMatch[0]);
         logger.info('Operations analysis completed', { recommendationCount: parsedResponse.length });
+        apiCache.set(cacheKey, parsedResponse, 60000); // Cache for 1 minute
         return parsedResponse;
       }
     } catch (error) {
       logger.error('Error calling Google GenAI for operations analysis', error as Error);
-      throw new ExternalServiceError('Google GenAI', 'Failed to generate operations recommendations');
+      logger.warn('Falling back to default recommendations');
     }
 
     // Fallback recommendations

@@ -5,8 +5,15 @@
 
 import { logger } from '../logger';
 
-class RateLimiter {
-  private store: any;
+interface RedisStore {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown, options?: { ex?: number }) => Promise<void>;
+  incr: (key: string) => Promise<number>;
+  del: (key: string) => Promise<number>;
+}
+
+export class RateLimiter {
+  private store?: RedisStore;
   private slidingWindowBuckets: Map<string, { count: number; resetTime: number }> = new Map();
 
   constructor() {
@@ -58,7 +65,7 @@ class RateLimiter {
         }
         
         // Increment count using Redis INCR
-        const newCount = await this.store.incr(redisKey);
+        await this.store.incr(redisKey);
         
         return {
           success: true,

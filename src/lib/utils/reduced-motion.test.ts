@@ -14,12 +14,12 @@ describe('Reduced Motion Utilities', () => {
 
   describe('prefersReducedMotion', () => {
     it('should return false when reduced motion is not preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: false });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       expect(prefersReducedMotion()).toBe(false);
     });
 
     it('should return true when reduced motion is preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: true });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: true });
       expect(prefersReducedMotion()).toBe(true);
     });
 
@@ -31,24 +31,24 @@ describe('Reduced Motion Utilities', () => {
 
   describe('getAnimationDuration', () => {
     it('should return 0 when reduced motion is preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: true });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: true });
       expect(getAnimationDuration(500)).toBe(0);
     });
 
     it('should return default duration when reduced motion is not preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: false });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       expect(getAnimationDuration(500)).toBe(500);
     });
   });
 
   describe('getTransitionDuration', () => {
     it('should return 0 when reduced motion is preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: true });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: true });
       expect(getTransitionDuration(300)).toBe(0);
     });
 
     it('should return default duration when reduced motion is not preferred', () => {
-      (window.matchMedia as any).mockReturnValue({ matches: false });
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
       expect(getTransitionDuration(300)).toBe(300);
     });
   });

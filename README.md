@@ -1,10 +1,8 @@
-# StadiumOS AI
+# StadiumOS AI README
 
-AI-powered stadium intelligence platform for FIFA World Cup 2026.
+## Overview
 
-## 🏆 Overview
-
-StadiumOS AI is a comprehensive smart stadium platform designed to enhance the FIFA World Cup 2026 experience through real-time AI-powered insights. The platform provides three core intelligent assistants:
+StadiumOS AI is a comprehensive smart stadium platform designed to enhance the FIFA World Cup 2026 experience through real-time AI-powered insights and operational intelligence. The platform provides three core intelligent assistants:
 
 - **Fan Assistant AI**: Smart navigation, crowd-aware routing, and accessibility support for stadium visitors
 - **Operations Intelligence AI**: Real-time dashboards, crowd analytics, and AI-driven operational recommendations
@@ -32,37 +30,56 @@ graph TB
         A[Landing Page] --> B[Fan Assistant]
         A --> C[Operations Dashboard]
         A --> D[Volunteer Assistant]
+        B --> E[WebSocket Connection]
+        C --> E
+        D --> E
     end
     
     subgraph "API Layer"
-        E[Fan API] --> F[Validation & Security]
-        G[Operations API] --> F
-        H[Volunteer API] --> F
+        E --> F[Fan API]
+        E --> G[Operations API]
+        E --> H[Volunteer API]
+    end
+    
+    subgraph "Security Layer"
+        I[Rate Limiting] --> F
+        I --> G
+        I --> H
+        J[Authentication] --> F
+        J --> G
+        J --> H
+        K[CSRF Protection] --> F
+        K --> G
+        K --> H
     end
     
     subgraph "Service Layer"
-        I[Fan Assistant Service] --> J[Google GenAI]
-        K[Operations Service] --> J
-        L[Volunteer Service] --> J
+        F --> L[Fan Assistant Service]
+        G --> M[Operations Service]
+        H --> N[Volunteer Service]
     end
     
     subgraph "Data Layer"
-        M[Simulated Data]
-        N[Real-time Sensors]
-        O[Stadium Database]
+        L --> O[Cache Layer]
+        M --> P[Analytics Layer]
+        N --> Q[Log Layer]
+        O --> R[Redis Store]
+        P --> R
+        Q --> R
     end
     
-    B --> E
-    C --> G
-    D --> H
-    E --> I
-    G --> K
-    H --> L
-    I --> M
-    K --> M
-    L --> M
-    I --> N
-    K --> N
+    subgraph "AI Layer"
+        L --> S[Google GenAI]
+        M --> S
+        N --> S
+    end
+    
+    L --> T[Simulated Data]
+    L --> U[Real-time Sensors]
+    M --> T
+    M --> U
+    N --> T
+    N --> U
 ```
 
 ### Data Flow
@@ -80,6 +97,7 @@ sequenceDiagram
     Frontend->>API: POST /api/endpoint
     API->>API: Validate & Sanitize
     API->>API: Rate Limit Check
+    API->>API: CSRF Validation
     API->>Service: Process Request
     Service->>Data: Fetch Context
     Data-->>Service: Stadium Data
@@ -94,7 +112,7 @@ sequenceDiagram
 ## 📁 Folder Structure
 
 ```
-promptwars-4/
+project-root/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # API Routes
 │   │   ├── fan-assistant/        # Fan assistant endpoints
@@ -106,30 +124,29 @@ promptwars-4/
 │   ├── layout.tsx                # Root layout
 │   ├── page.tsx                  # Landing page
 │   └── globals.css               # Global styles
-├── components/                   # Reusable components
-│   └── ui/                       # shadcn/ui components
+├── config/                       # Configuration files
+│   └── security-config.js         # Security configuration
+├── docs/                         # Documentation
+├── scripts/                      # Setup scripts
 ├── src/                          # Source code
-│   ├── assets/                   # Static assets
 │   ├── components/               # Feature components
-│   │   └── layout/               # Layout components
-│   ├── features/                 # Feature modules
-│   │   ├── fan-assistant/        # Fan assistant feature
-│   │   ├── operations-dashboard/ # Operations dashboard feature
-│   │   └── volunteer-assistant/  # Volunteer assistant feature
 │   ├── lib/                      # Core libraries
 │   │   ├── ai/                   # AI service layer
+│   │   ├── cache/                # Caching layer
 │   │   ├── database/             # Data layer
+│   │   ├── errors/               # Error handling
 │   │   ├── security/             # Security middleware
+│   │   ├── utils/                # Utility functions
 │   │   └── validation/           # Schema validation
-│   ├── test/                     # Test configuration
+│   ├── hooks/                    # Custom React hooks
 │   └── types/                    # TypeScript types
-├── hooks/                        # Custom React hooks
-├── lib/                          # Utility functions
+├── components/                   # Reusable components
+│   └── ui/                       # shadcn/ui components
 ├── public/                       # Static files
-├── vitest.config.ts              # Vitest configuration
-├── next.config.ts                # Next.js configuration
-├── tsconfig.json                 # TypeScript configuration
-└── package.json                  # Dependencies
+├── tests/                        # Test configuration and test suites
+├── package.json                  # Dependencies and scripts
+├── README.md                     # Project documentation
+└── ...                           # Other configuration files
 ```
 
 ## 🛠️ Tech Stack
@@ -148,16 +165,21 @@ promptwars-4/
 - **AI**: Google GenAI (Gemini Flash)
 - **Validation**: Zod
 - **Security**: Custom middleware (rate limiting, sanitization, CSP)
+- **Error Handling**: Centralized error recovery strategies
+- **Monitoring**: Log analysis and health checks
 
 ### Testing
 - **Framework**: Vitest
 - **React Testing**: @testing-library/react
 - **Coverage**: @vitest/coverage-v8
+- **Type Safety**: TypeScript strict mode
 
-### Development
-- **Package Manager**: npm
-- **Linting**: ESLint with Next.js config
-- **Type Checking**: TypeScript strict mode
+### Security
+- **Rate Limiting**: Redis-based with in-memory fallback
+- **CSRF Protection**: User-specific tokens with Redis storage
+- **Input Validation**: Zod schema validation
+- **Security Headers**: CSP, HSTS, X-Frame-Options, etc.
+- **Error Recovery**: Automatic retry and fallback mechanisms
 
 ## 🔒 Security
 
@@ -165,7 +187,8 @@ promptwars-4/
 
 - **Input Validation**: Zod schema validation on all API endpoints
 - **Input Sanitization**: HTML tag removal and length limiting
-- **Rate Limiting**: In-memory rate limiting (60 requests/minute per IP)
+- **Rate Limiting**: Redis-based rate limiting with in-memory fallback (60 requests/minute per IP)
+- **CSRF Protection**: User-specific tokens with expiration and storage
 - **Security Headers**:
   - Content Security Policy (CSP)
   - X-Frame-Options: DENY
@@ -182,8 +205,9 @@ promptwars-4/
 - No secrets in code (use environment variables)
 - SQL injection prevention (parameterized queries)
 - XSS prevention (input sanitization, CSP)
-- CSRF protection (same-site cookies)
+- CSRF protection (user-specific tokens)
 - Secure API design (proper HTTP methods, status codes)
+- Comprehensive error recovery and fallback mechanisms
 
 ## ♿ Accessibility (WCAG AA)
 
@@ -239,19 +263,32 @@ promptwars-4/
 ```
 src/
 ├── lib/
-│   ├── validation/
-│   │   └── schemas.test.ts
-│   ├── security/
+│   ├── errors/                    # Error handling
+│   │   ├── error-handler.ts
+│   │   └── error-handler.test.ts
+│   ├── security/                  # Security middleware
+│   │   ├── csrf-protection.ts
+│   │   ├── csrf-protection.test.ts
+│   │   ├── middleware.ts
 │   │   └── middleware.test.ts
-│   ├── database/
-│   │   └── simulated-data.test.ts
-│   └── ai/
-│       ├── fan-assistant.test.ts
-│       ├── operations-assistant.test.ts
-│       └── volunteer-assistant.test.ts
-└── components/
-    └── layout/
-        └── stat-card.test.tsx
+│   └── utils/                     # Utility functions
+│       ├── cache.ts
+│       ├── cache.test.ts
+│       ├── reduced-motion.ts
+│       ├── reduced-motion.test.ts
+│       ├── debounce.ts
+│       └── debounce.test.ts
+├── components/
+│   └── layout/
+│       └── stat-card.test.tsx
+├── database/
+│   └── simulated-data.test.ts
+├── validation/
+│   └── schemas.test.ts
+├── ai/
+│   ├── fan-assistant.test.ts
+│   ├── operations-assistant.test.ts
+│   └── volunteer-assistant.test.ts
 ```
 
 ### Running Tests
@@ -268,6 +305,12 @@ npm run test:coverage
 
 # Type checking
 npm run type-check
+
+# Linting
+npm run lint
+
+# Lint and fix
+npm run lint:fix
 ```
 
 ## 🌍 Internationalization (i18n)
@@ -302,7 +345,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your GEMINI_API_KEY
+# Edit .env with your GEMINI_API_KEY and other required variables
 ```
 
 ### Development
@@ -338,7 +381,11 @@ npm run lint:fix
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+UPSTASH_REDIS_URL=your_redis_url (optional for Redis-backed services)
+UPSTASH_REDIS_TOKEN=your_redis_token (optional for Redis-backed services)
+JWT_SECRET=your_jwt_secret_key
 NODE_ENV=development
+PORT=3000
 ```
 
 ### Required Variables
@@ -348,6 +395,9 @@ NODE_ENV=development
 ### Optional Variables
 
 - `NODE_ENV`: Environment (development/production/test)
+- `UPSTASH_REDIS_URL`: Upstash Redis URL for Redis-backed services
+- `UPSTASH_REDIS_TOKEN`: Upstash Redis token for Redis-backed services
+- `JWT_SECRET`: Secret key for JWT token generation
 
 ## 📊 Features
 
@@ -422,6 +472,7 @@ graph LR
 - **Monitoring**: Application performance monitoring
 - **Logging**: Structured logging and error tracking
 - **API Documentation**: OpenAPI/Swagger documentation
+- **CI/CD**: Automated testing and deployment pipelines
 
 ## 🤝 Contributing
 

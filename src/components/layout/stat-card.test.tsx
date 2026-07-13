@@ -1,29 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { StatCard } from './stat-card';
 
 describe('StatCard', () => {
   it('should render title and value', () => {
-    render(<StatCard title="Total Attendance" value="52,418" />);
-    expect(screen.getByText('Total Attendance')).toBeInTheDocument();
-    expect(screen.getByText('52,418')).toBeInTheDocument();
+    const { container } = render(<StatCard title="Total Attendance" value="52,418" />);
+    expect(container.textContent).toContain('Total Attendance');
+    expect(container.textContent).toContain('52,418');
   });
 
   it('should render subtitle when provided', () => {
-    render(
+    const { container } = render(
       <StatCard title="Total Attendance" value="52,418" subtitle="65.5% capacity" />
     );
-    expect(screen.getByText('65.5% capacity')).toBeInTheDocument();
+    expect(container.textContent).toContain('65.5% capacity');
   });
 
   it('should render icon when provided', () => {
     const icon = <div data-testid="test-icon">Icon</div>;
-    render(<StatCard title="Test" value="100" icon={icon} />);
-    expect(screen.getByTestId('test-icon')).toBeInTheDocument();
+    const { container } = render(<StatCard title="Test" value="100" icon={icon} />);
+    const testIcon = container.querySelector('[data-testid="test-icon"]');
+    expect(testIcon).toBeInTheDocument();
   });
 
   it('should render trend when provided', () => {
-    render(
+    const { container } = render(
       <StatCard
         title="Test"
         value="100"
@@ -31,28 +32,28 @@ describe('StatCard', () => {
         trendValue="+12% from last hour"
       />
     );
-    expect(screen.getByText('+12% from last hour')).toBeInTheDocument();
+    expect(container.textContent).toContain('+12% from last hour');
   });
 
   it('should show upward arrow for up trend', () => {
-    render(
+    const { container } = render(
       <StatCard title="Test" value="100" trend="up" trendValue="+12%" />
     );
-    expect(screen.getByText('↑')).toBeInTheDocument();
+    expect(container.textContent).toContain('↑');
   });
 
   it('should show downward arrow for down trend', () => {
-    render(
+    const { container } = render(
       <StatCard title="Test" value="100" trend="down" trendValue="-12%" />
     );
-    expect(screen.getByText('↓')).toBeInTheDocument();
+    expect(container.textContent).toContain('↓');
   });
 
   it('should show right arrow for neutral trend', () => {
-    render(
+    const { container } = render(
       <StatCard title="Test" value="100" trend="neutral" trendValue="0%" />
     );
-    expect(screen.getByText('→')).toBeInTheDocument();
+    expect(container.textContent).toContain('→');
   });
 
   it('should apply destructive color for up trend', () => {

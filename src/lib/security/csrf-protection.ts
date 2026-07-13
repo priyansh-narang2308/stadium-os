@@ -8,8 +8,14 @@ import { logger } from '../logger';
 
 const TOKEN_CACHE_TTL = 3600; // 1 hour
 
+interface RedisCache {
+  get: (key: string) => Promise<unknown>;
+  set: (key: string, value: unknown, options?: { ex?: number }) => Promise<void>;
+  del: (key: string) => Promise<number>;
+}
+
 class CSRFProtection {
-  private cacheStore?: any;
+  private cacheStore?: RedisCache;
   private staticTokens: Map<string, { token: string; timestamp: number }> = new Map();
 
   constructor() {
@@ -17,7 +23,7 @@ class CSRFProtection {
     const redisToken = process.env.UPSTASH_REDIS_TOKEN;
     
     if (redisUrl && redisToken) {
-      this.initializeRedisStore();
+      void this.initializeRedisStore();
     }
   }
 
@@ -26,7 +32,7 @@ class CSRFProtection {
       const { Redis } = await import('@upstash/redis');
       this.cacheStore = new Redis({ url: process.env.UPSTASH_REDIS_URL!, token: process.env.UPSTASH_REDIS_TOKEN! });
       logger.info('Redis-backed CSRF protection initialized');
-    } catch (error) {
+    } catch {
       logger.warn('Failed to initialize Redis store, using in-memory fallback');
     }
   }
@@ -63,7 +69,7 @@ class CSRFProtection {
       if (this.cacheStore) {
         const stored = await this.cacheStore.get(`csrf:${token}`);
         if (stored) {
-          tokenData = JSON.parse(stored);
+          tokenData = JSON.parse(stored as string);
         }
       }
       
@@ -117,7 +123,7 @@ class CSRFProtection {
     try {
       if (this.cacheStore) {
         const stored = await this.cacheStore.get(`csrf:${token}`);
-        return stored ? JSON.parse(stored) : null;
+        return stored ? JSON.parse(stored as string) : null;
       } else {
         return this.staticTokens.get(token) || null;
       }

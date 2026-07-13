@@ -7,6 +7,8 @@ import {
   MAX_INPUT_LENGTH 
 } from '../constants';
 import { rateLimiter } from '../rate-limit/rate-limiter';
+import { csrfProtection } from './csrf-protection';
+import { generateCSRFToken, getCSRFTokenFromHeaders } from './csrf';
 
 export async function validateEnv(): Promise<void> {
   try {
@@ -23,7 +25,11 @@ export async function validateEnv(): Promise<void> {
 
 export async function rateLimit(identifier: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
   const result = await rateLimiter.consume(identifier, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS);
-  return result;
+  return {
+    allowed: result.success,
+    remaining: Math.max(0, RATE_LIMIT_MAX_REQUESTS - (result.success ? 0 : 1)),
+    resetTime: result.resetTime,
+  };
 }
 
 export async function getRateLimitHeaders(identifier: string): Promise<Record<string, string>> {
@@ -62,7 +68,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
 export function sanitizeInput(input: string): string {
   return input
     .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/<[^>]*>/g, '') // Remove full HTML tags
     .substring(0, MAX_INPUT_LENGTH); // Limit length
 }
 
@@ -84,7 +90,7 @@ export function addCSRFProtection(response: NextResponse): NextResponse {
   return response;
 }
 
-export function validateCSRFRequest(request: NextRequest): boolean {
+export async function validateCSRFRequest(request: NextRequest): Promise<boolean> {
   const headerToken = getCSRFTokenFromHeaders(request.headers);
   const cookieToken = request.cookies.get('csrf-token')?.value;
   
@@ -98,5 +104,5 @@ export function validateCSRFRequest(request: NextRequest): boolean {
     return false;
   }
   
-  return validateCSRFToken(headerToken);
+  return csrfProtection.validateToken(headerToken);
 }

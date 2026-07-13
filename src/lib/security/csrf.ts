@@ -16,7 +16,7 @@ export function validateCSRFToken(token: string, maxAgeMs: number = 3600000): bo
     const [hash, timestamp] = token.split(':');
     const tokenAge = Date.now() - parseInt(timestamp, 10);
     
-    if (tokenAge > maxAgeMs) {
+    if (tokenAge >= maxAgeMs) {
       return false;
     }
     
@@ -29,3 +29,7 @@ export function validateCSRFToken(token: string, maxAgeMs: number = 3600000): bo
 export function getCSRFTokenFromHeaders(headers: Headers): string | null {
   return headers.get('x-csrf-token') || null;
 }
+
+export const csrfProtection = {
+  validateToken: validateCSRFToken,
+};

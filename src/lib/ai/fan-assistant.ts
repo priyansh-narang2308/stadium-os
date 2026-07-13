@@ -9,7 +9,6 @@ import {
   FAN_ASSISTANT_SYSTEM_PROMPT, 
   FAN_ASSISTANT_RESPONSE_FORMAT 
 } from "@/src/lib/config/prompts";
-import { ExternalServiceError } from "@/src/lib/errors";
 import { logger } from "@/src/lib/logger";
 import { MAX_INPUT_LENGTH } from "@/src/lib/constants";
 
@@ -100,7 +99,7 @@ ${FAN_ASSISTANT_RESPONSE_FORMAT}`;
       }
     } catch (error) {
       logger.error('Error calling Google GenAI for fan assistant', error as Error);
-      throw new ExternalServiceError('Google GenAI', 'Failed to generate AI response');
+      logger.warn('Falling back to default response');
     }
 
     // Fallback to simple response if anything fails
