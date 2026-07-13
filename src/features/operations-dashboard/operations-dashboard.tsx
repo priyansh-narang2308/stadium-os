@@ -23,8 +23,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { StatCard } from "@/src/components/layout/stat-card";
-import { OperationsRecommendation, PriorityLevel } from "@/src/types";
+import { OperationsRecommendation, PriorityLevel, WeatherData } from "@/src/types";
 import { Badge } from "@/components/ui/badge";
+import { logger } from "@/src/lib/logger";
 
 interface DashboardData {
   gates: Array<{
@@ -43,12 +44,7 @@ interface DashboardData {
     densityPercentage: number;
     timestamp: Date;
   }>;
-  weather: {
-    stadiumId: string;
-    temperature: number;
-    condition: "sunny" | "cloudy" | "rainy" | "stormy";
-    windSpeed: number;
-  };
+  weather: WeatherData;
 }
 
 interface ChartData {
@@ -56,11 +52,12 @@ interface ChartData {
   density: number;
 }
 
-const WeatherIcon = memo(({ condition }: { condition: DashboardData['weather']['condition'] }) => {
+const WeatherIcon = memo(({ condition }: { condition: WeatherData['condition'] }) => {
   switch (condition) {
     case "sunny":
       return <Sun className="h-6 w-6 text-yellow-500" aria-hidden="true" />;
     case "cloudy":
+    case "partly-cloudy":
       return <Cloud className="h-6 w-6 text-gray-500" aria-hidden="true" />;
     case "rainy":
       return <Rainbow className="h-6 w-6 text-blue-500" aria-hidden="true" />;
@@ -86,7 +83,7 @@ export function OperationsDashboard() {
         const data: DashboardData = await response.json();
         setDashboardData(data);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        logger.error("Error fetching dashboard data", error as Error);
       }
     };
     fetchData();
@@ -107,7 +104,7 @@ export function OperationsDashboard() {
       setRecommendations(data.recommendations);
       setDashboardData(data.dashboardData);
     } catch (error) {
-      console.error("Error analyzing operations:", error);
+      logger.error("Error analyzing operations", error as Error);
     } finally {
       setIsLoading(false);
     }
@@ -195,7 +192,7 @@ export function OperationsDashboard() {
             <CardTitle>Crowd Density by Area</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-80" role="img" aria-label={`Bar chart showing crowd density by area. ${chartData.map(d => `${d.name}: ${d.density}%`).join(', ')}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -229,8 +226,8 @@ export function OperationsDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dashboardData?.gates?.map((gate: DashboardData['gates'][number], index: number) => (
-                  <TableRow key={index}>
+                {dashboardData?.gates?.map((gate: DashboardData['gates'][number]) => (
+                  <TableRow key={gate.id}>
                     <TableCell className="font-medium">
                       {gate.gateName}
                     </TableCell>
@@ -260,11 +257,11 @@ export function OperationsDashboard() {
             </Button>
           </div>
 
-          {recommendations.length > 0 && (
+          {recommendations.length > 0 ? (
             <div className="space-y-4">
-              {recommendations.map((rec, index) => (
+              {recommendations.map((rec) => (
                 <Card
-                  key={index}
+                  key={`${rec.priority}-${rec.recommendation}`}
                   className="border-l-4"
                   style={{
                     borderLeftColor:
@@ -294,6 +291,10 @@ export function OperationsDashboard() {
                 </Card>
               ))}
             </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Describe a situation above to receive AI-powered analysis and recommendations.
+            </p>
           )}
         </CardContent>
       </Card>

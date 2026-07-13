@@ -35,7 +35,7 @@ export const VolunteerRequestSchema = z.object({
 export const FacilitySchema = z.object({
   id: z.string(),
   stadiumId: z.string(),
-  type: z.enum(['restroom', 'food', 'merchandise', 'first-aid', 'entrance', 'exit', 'elevator', 'escalator']),
+  type: z.enum(['restroom', 'food', 'merchandise', 'first-aid', 'entrance', 'exit', 'elevator', 'escalator', 'parking', 'ticket-booth', 'fan-zone']),
   name: z.string(),
   location: z.string(),
   accessibilityAvailable: z.boolean(),

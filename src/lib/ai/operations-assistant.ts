@@ -7,8 +7,9 @@ import {
 import { GoogleGenAI } from "@google/genai";
 import { 
   OPERATIONS_ASSISTANT_SYSTEM_PROMPT,
-  OPERATIONS_ASSISTANT_RESPONSE_FORMAT 
-} from "@/src/lib/config/prompts";
+  OPERATIONS_ASSISTANT_RESPONSE_FORMAT,
+  AI_CONFIG,
+} from "@/src/lib/config/ai-config";
 import { logger } from "@/src/lib/logger";
 import { MAX_QUERY_LENGTH } from "@/src/lib/constants";
 import { apiCache } from "@/src/lib/utils/cache";
@@ -24,7 +25,7 @@ export class OperationsAssistantService {
   private ai: GoogleGenAI;
 
   constructor(ai?: GoogleGenAI) {
-    this.ai = ai || new GoogleGenAI({});
+    this.ai = ai || new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
   async analyzeOperations(
@@ -56,7 +57,7 @@ ${OPERATIONS_ASSISTANT_RESPONSE_FORMAT}`;
 
     try {
       const interaction = await this.ai.interactions.create({
-        model: "gemini-flash-latest",
+        model: AI_CONFIG.OPERATIONS_MODEL,
         input: prompt,
       });
 

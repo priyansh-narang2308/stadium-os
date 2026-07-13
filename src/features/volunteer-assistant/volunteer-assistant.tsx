@@ -1,83 +1,113 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { memo } from "react";
 import { Shield, User, Bot, CheckCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { VolunteerAssistantResponse } from "@/src/types";
+import { useChat, ChatMessage } from "@/src/hooks/use-chat";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  data?: VolunteerAssistantResponse;
-}
+const MessageBubble = memo(({ message }: { message: ChatMessage<VolunteerAssistantResponse> }) => (
+  <div
+    className={`flex gap-3 ${
+      message.role === "user" ? "justify-end" : "justify-start"
+    }`}
+    role="article"
+    aria-label={`${message.role} message`}
+  >
+    <div
+      className={`flex gap-3 max-w-[80%] ${
+        message.role === "user" ? "flex-row-reverse" : ""
+      }`}
+    >
+      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
+        {message.role === "user" ? (
+          <User className="h-4 w-4" />
+        ) : (
+          <Bot className="h-4 w-4" />
+        )}
+      </div>
+      <div
+        className={`rounded-lg p-4 ${
+          message.role === "user"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted"
+        }`}
+      >
+        <p>{message.content}</p>
+        {message.data && (
+          <div className="mt-4 space-y-3" role="region" aria-label="Additional information">
+            {message.data.steps?.length ? (
+              <div className="space-y-2">
+                <p className="font-semibold">Steps:</p>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  {message.data.steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" aria-hidden="true" />
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+            {message.data.emergencyContact && (
+              <div className="flex items-center gap-2 text-sm border-t pt-3 mt-3">
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                <span>Emergency: {message.data.emergencyContact}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+MessageBubble.displayName = "MessageBubble";
+
+const LoadingIndicator = memo(() => (
+  <div className="flex gap-3" role="status" aria-live="polite" aria-label="Assistant is typing">
+    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
+      <Bot className="h-4 w-4" />
+    </div>
+    <div className="rounded-lg p-4 bg-muted">
+      <div className="flex gap-1">
+        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }} aria-hidden="true" />
+        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }} aria-hidden="true" />
+        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }} aria-hidden="true" />
+      </div>
+    </div>
+  </div>
+));
+
+LoadingIndicator.displayName = "LoadingIndicator";
+
+const exampleQueries = [
+  "Where should I guide wheelchair users?",
+  "What's the emergency evacuation procedure?",
+  "A child is lost, what do I do?",
+];
 
 export function VolunteerAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hello Volunteer! How can I help you assist fans today?",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/volunteer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: input }),
-      });
-
-      const data: VolunteerAssistantResponse = await response.json();
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.guidance,
-          data,
-        },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [input, isLoading]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
-      }
-    },
-    [handleSend]
-  );
-
-  const exampleQueries = [
-    "Where should I guide wheelchair users?",
-    "What's the emergency evacuation procedure?",
-    "A child is lost, what do I do?",
-  ];
+  const {
+    messages,
+    input,
+    setInput,
+    isLoading,
+    handleSend,
+    handleKeyDown,
+    scrollRef,
+  } = useChat<VolunteerAssistantResponse>({
+    apiEndpoint: "/api/volunteer",
+    initialMessage:
+      "Hello Volunteer! How can I help you assist fans today?",
+    extractResponse: (data: Record<string, unknown>) => ({
+      content: (data.guidance as string) || "",
+      raw: data,
+    }),
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -90,14 +120,12 @@ export function VolunteerAssistant() {
         </header>
 
         <section className="grid md:grid-cols-2 gap-6 mb-8" aria-label="Example queries">
-          {exampleQueries.map((query, index) => (
+              {exampleQueries.map((query, index) => (
             <Button
-              key={index}
+              key={`ex-${index}`}
               variant="secondary"
               className="h-auto py-4 justify-start text-left whitespace-normal"
-              onClick={() => {
-                setInput(query);
-              }}
+              onClick={() => setInput(query)}
               aria-label={`Use example query: ${query}`}
             >
               {query}
@@ -112,96 +140,12 @@ export function VolunteerAssistant() {
               Volunteer Chat
             </CardTitle>
           </CardHeader>
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea ref={scrollRef} className="flex-1 p-4">
             <div className="space-y-4" role="log" aria-live="polite" aria-label="Chat messages">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-3 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                  role="article"
-                  aria-label={`${message.role} message`}
-                >
-                  <div
-                    className={`flex gap-3 max-w-[80%] ${
-                      message.role === "user" ? "flex-row-reverse" : ""
-                    }`}
-                  >
-                    <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
-                      {message.role === "user" ? (
-                        <User className="h-4 w-4" />
-                      ) : (
-                        <Bot className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div
-                      className={`rounded-lg p-4 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
-                      <p>{message.content}</p>
-                      {message.data && (
-                        <div className="mt-4 space-y-3" role="region" aria-label="Additional information">
-                          {message.data.steps &&
-                            message.data.steps.length > 0 && (
-                              <div className="space-y-2">
-                                <p className="font-semibold">Steps:</p>
-                                <ol className="list-decimal list-inside space-y-1 text-sm">
-                                  {message.data.steps.map((step, i) => (
-                                    <li
-                                      key={i}
-                                      className="flex items-start gap-2"
-                                    >
-                                      <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" aria-hidden="true" />
-                                      {step}
-                                    </li>
-                                  ))}
-                                </ol>
-                              </div>
-                            )}
-                          {message.data.emergencyContact && (
-                            <div className="flex items-center gap-2 text-sm border-t pt-3 mt-3">
-                              <Phone className="h-4 w-4" aria-hidden="true" />
-                              <span>
-                                Emergency: {message.data.emergencyContact}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              {(messages as ChatMessage<VolunteerAssistantResponse>[]).map((message, index) => (
+                <MessageBubble key={`msg-${index}`} message={message} />
               ))}
-              {isLoading && (
-                <div className="flex gap-3" role="status" aria-live="polite" aria-label="Assistant is typing">
-                  <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-muted" aria-hidden="true">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <div className="rounded-lg p-4 bg-muted">
-                    <div className="flex gap-1">
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+              {isLoading && <LoadingIndicator />}
             </div>
           </ScrollArea>
           <div className="p-4 border-t">

@@ -25,9 +25,12 @@ export async function validateEnv(): Promise<void> {
 
 export async function rateLimit(identifier: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
   const result = await rateLimiter.consume(identifier, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS);
+  const remaining = result.success
+    ? await rateLimiter.getRemaining(identifier, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS).then(r => r.remaining)
+    : 0;
   return {
     allowed: result.success,
-    remaining: Math.max(0, RATE_LIMIT_MAX_REQUESTS - (result.success ? 0 : 1)),
+    remaining,
     resetTime: result.resetTime,
   };
 }
@@ -48,19 +51,37 @@ export function getClientIdentifier(request: NextRequest): string {
 }
 
 export function addSecurityHeaders(response: NextResponse): NextResponse {
-  // Content Security Policy
+  // Content Security Policy - strict production policy
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+    [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' https: data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss:",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+    ].join('; ')
   );
 
   // Other security headers
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+  );
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 
   return response;
 }

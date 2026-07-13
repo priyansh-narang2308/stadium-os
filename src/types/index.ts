@@ -28,7 +28,10 @@ export type FacilityType =
   | "entrance"
   | "exit"
   | "elevator"
-  | "escalator";
+  | "escalator"
+  | "parking"
+  | "ticket-booth"
+  | "fan-zone";
 
 export interface Facility {
   id: string;
@@ -38,6 +41,8 @@ export interface Facility {
   location: string;
   accessibilityAvailable: boolean;
   currentWaitTime?: number;
+  totalSpots?: number;
+  availableSpots?: number;
 }
 
 export interface CrowdData {
@@ -46,6 +51,7 @@ export interface CrowdData {
   area: string;
   densityPercentage: number;
   timestamp: Date;
+  trend?: 'increasing' | 'decreasing' | 'stable';
 }
 
 export interface GateData {
@@ -61,8 +67,32 @@ export interface GateData {
 export interface WeatherData {
   stadiumId: string;
   temperature: number;
-  condition: "sunny" | "cloudy" | "rainy" | "stormy";
+  condition: "sunny" | "cloudy" | "rainy" | "stormy" | "partly-cloudy";
   windSpeed: number;
+  humidity?: number;
+  precipitation?: number;
+}
+
+export interface MatchEvent {
+  id: string;
+  stadiumId: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: Date;
+  phase: string;
+  estimatedAttendance: number;
+  status: 'upcoming' | 'ongoing' | 'finished' | 'cancelled';
+}
+
+export interface SecurityAlert {
+  id: string;
+  stadiumId: string;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  type: string;
+  area: string;
+  description: string;
+  timestamp: Date;
+  status: 'active' | 'resolved' | 'investigating';
 }
 
 export interface AIInteraction {

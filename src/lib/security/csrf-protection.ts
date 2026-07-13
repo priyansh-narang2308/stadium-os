@@ -8,9 +8,12 @@ import { logger } from '../logger';
 
 const TOKEN_CACHE_TTL = 3600; // 1 hour
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SetOptions = Record<string, any>;
+
 interface RedisCache {
   get: (key: string) => Promise<unknown>;
-  set: (key: string, value: unknown, options?: { ex?: number }) => Promise<void>;
+  set: (key: string, value: unknown, options?: SetOptions) => Promise<unknown>;
   del: (key: string) => Promise<number>;
 }
 
@@ -89,8 +92,7 @@ class CSRFProtection {
       
       // Check token expiration
       const tokenAge = Date.now() - tokenData.timestamp;
-      if (tokenAge > maxAgeMs) {
-        // Clean up expired token
+      if (tokenAge >= maxAgeMs) {
         await this.cleanupExpiredToken(token);
         return false;
       }

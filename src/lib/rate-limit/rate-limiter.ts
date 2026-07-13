@@ -1,22 +1,27 @@
-/**
- * Production Rate Limiting
- * Redis-based rate limiting for scalability
- */
-
 import { logger } from '../logger';
+
+const MAX_MAP_SIZE = 100_000;
+const CLEANUP_INTERVAL_MS = 300_000;
+
+type SetOptions = Record<string, unknown>;
 
 interface RedisStore {
   get: (key: string) => Promise<unknown>;
-  set: (key: string, value: unknown, options?: { ex?: number }) => Promise<void>;
+  set: (key: string, value: unknown, options?: SetOptions) => Promise<unknown>;
   incr: (key: string) => Promise<number>;
   del: (key: string) => Promise<number>;
+  expire?: (key: string, seconds: number) => Promise<number>;
 }
 
 export class RateLimiter {
   private store?: RedisStore;
-  private slidingWindowBuckets: Map<string, { count: number; resetTime: number }> = new Map();
+  private buckets: Map<string, { count: number; resetTime: number }> = new Map();
+  private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
+    if (typeof setInterval !== 'undefined') {
+      this.cleanupTimer = setInterval(() => this.cleanup(), CLEANUP_INTERVAL_MS);
+    }
     this.initializeStore();
   }
 
@@ -24,107 +29,98 @@ export class RateLimiter {
     try {
       const redisUrl = process.env.UPSTASH_REDIS_URL;
       const redisToken = process.env.UPSTASH_REDIS_TOKEN;
-      
       if (redisUrl && redisToken) {
         const { Redis } = await import('@upstash/redis');
-        this.store = new Redis({ url: redisUrl, token: redisToken });
+        this.store = new Redis({ url: redisUrl, token: redisToken }) as unknown as RedisStore;
         logger.info('Redis-backed rate limiter initialized');
       } else {
-        logger.warn('Redis not configured, using sliding window in-memory implementation');
+        logger.warn('Redis not configured, using in-memory implementation');
       }
     } catch (error) {
       logger.error('Failed to initialize store', error as Error);
     }
   }
 
-  async consume(identifier: string, limit: number, windowMs: number): Promise<{ success: boolean; limit: number; resetTime: number }> {
+  async consume(
+    identifier: string,
+    limit: number,
+    windowMs: number
+  ): Promise<{ success: boolean; limit: number; resetTime: number }> {
     const now = Date.now();
-    
-    // Try Redis store first if available
+
     if (this.store) {
-      try {
-        const redisKey = `rate_limit:${identifier}`;
-        const current = await this.store.get(redisKey);
-        
-        if (!current) {
-          // No existing record, set initial value
-          await this.store.set(redisKey, '1', { ex: Math.ceil(windowMs / 1000) });
-          return {
-            success: true,
-            limit,
-            resetTime: now + windowMs,
-          };
-        }
-        
-        if (parseInt(current as string) >= limit) {
-          return {
-            success: false,
-            limit,
-            resetTime: now + windowMs,
-          };
-        }
-        
-        // Increment count using Redis INCR
-        await this.store.incr(redisKey);
-        
-        return {
-          success: true,
-          limit,
-          resetTime: now + windowMs,
-        };
-      } catch (error) {
-        logger.error('Redis rate limiting error', error as Error, { identifier });
-        // Fallback to sliding window
-      }
+      return this.redisConsume(identifier, limit, windowMs, now);
     }
-    
-    // Fallback to sliding window implementation
-    return this.slidingWindowConsume(identifier, limit, windowMs);
+
+    return this.memoryConsume(identifier, limit, windowMs, now);
   }
 
-  private slidingWindowConsume(identifier: string, limit: number, windowMs: number): {
-    success: boolean;
-    limit: number;
-    resetTime: number;
-  } {
-    const now = Date.now();
-    const bucket = this.slidingWindowBuckets.get(identifier);
-    
-    // Clean up old buckets
-    if (bucket && now > bucket.resetTime) {
-      this.slidingWindowBuckets.delete(identifier);
+  private async redisConsume(
+    identifier: string,
+    limit: number,
+    windowMs: number,
+    now: number
+  ): Promise<{ success: boolean; limit: number; resetTime: number }> {
+    try {
+      const redisKey = `rate_limit:${identifier}`;
+      const current = await this.store!.get(redisKey);
+
+      if (current === null || current === undefined) {
+        await this.store!.set(redisKey, '1', { ex: Math.ceil(windowMs / 1000) });
+        return { success: true, limit, resetTime: now + windowMs };
+      }
+
+      const count = parseInt(current as string, 10);
+      if (count >= limit) {
+        const ttl = await this.store!.expire?.(redisKey, Math.ceil(windowMs / 1000));
+        if (ttl === undefined) {
+          await this.store!.set(redisKey, String(count), { ex: Math.ceil(windowMs / 1000) });
+        }
+        return { success: false, limit, resetTime: now + windowMs };
+      }
+
+      await this.store!.incr(redisKey);
+      return { success: true, limit, resetTime: now + windowMs };
+    } catch (error) {
+      logger.error('Redis rate limiting error, falling back to memory', error as Error, { identifier });
+      return this.memoryConsume(identifier, limit, windowMs, now);
     }
-    
-    // Create new bucket if needed
-    if (!bucket) {
-      this.slidingWindowBuckets.set(identifier, {
-        count: 1,
-        resetTime: now + windowMs,
-      });
-      return {
-        success: true,
-        limit,
-        resetTime: now + windowMs,
-      };
+  }
+
+  private memoryConsume(
+    identifier: string,
+    limit: number,
+    windowMs: number,
+    now: number
+  ): { success: boolean; limit: number; resetTime: number } {
+    if (this.buckets.size >= MAX_MAP_SIZE) {
+      this.evictStaleEntries();
     }
-    
-    // Check if bucket has capacity
+
+    const bucket = this.buckets.get(identifier);
+
+    if (!bucket || now > bucket.resetTime) {
+      this.buckets.set(identifier, { count: 1, resetTime: now + windowMs });
+      return { success: true, limit, resetTime: now + windowMs };
+    }
+
     if (bucket.count >= limit) {
       logger.warn('Rate limit exceeded', { identifier });
-      return {
-        success: false,
-        limit,
-        resetTime: bucket.resetTime,
-      };
+      return { success: false, limit, resetTime: bucket.resetTime };
     }
-    
-    // Increment bucket count
+
     bucket.count++;
-    return {
-      success: true,
-      limit,
-      resetTime: bucket.resetTime,
-    };
+    return { success: true, limit, resetTime: bucket.resetTime };
+  }
+
+  private evictStaleEntries(): void {
+    const now = Date.now();
+    for (const [key, bucket] of this.buckets) {
+      if (now > bucket.resetTime) {
+        this.buckets.delete(key);
+      }
+      if (this.buckets.size < MAX_MAP_SIZE / 2) break;
+    }
   }
 
   async reset(identifier: string): Promise<void> {
@@ -135,25 +131,44 @@ export class RateLimiter {
         logger.error('Error resetting rate limit in Redis', error as Error, { identifier });
       }
     }
-    this.slidingWindowBuckets.delete(identifier);
+    this.buckets.delete(identifier);
   }
 
-  async getRemaining(identifier: string, limit: number, windowMs: number): Promise<{ remaining: number; resetTime: number }> {
+  async getRemaining(
+    identifier: string,
+    limit: number,
+    windowMs: number
+  ): Promise<{ remaining: number; resetTime: number }> {
     const now = Date.now();
-    const bucket = this.slidingWindowBuckets.get(identifier);
-    
-    if (bucket && now <= bucket.resetTime) {
-      const remaining = Math.max(0, limit - bucket.count);
-      return {
-        remaining,
-        resetTime: bucket.resetTime,
-      };
+
+    if (this.store) {
+      try {
+        const redisKey = `rate_limit:${identifier}`;
+        const current = await this.store.get(redisKey);
+        if (current === null || current === undefined) {
+          return { remaining: limit, resetTime: now + windowMs };
+        }
+        const count = parseInt(current as string, 10);
+        return { remaining: Math.max(0, limit - count), resetTime: now + windowMs };
+      } catch (error) {
+        logger.error('Redis getRemaining error', error as Error);
+      }
     }
-    
-    return {
-      remaining: limit,
-      resetTime: now + windowMs,
-    };
+
+    const bucket = this.buckets.get(identifier);
+    if (bucket && now <= bucket.resetTime) {
+      return { remaining: Math.max(0, limit - bucket.count), resetTime: bucket.resetTime };
+    }
+    return { remaining: limit, resetTime: now + windowMs };
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, bucket] of this.buckets) {
+      if (now > bucket.resetTime) {
+        this.buckets.delete(key);
+      }
+    }
   }
 }
 

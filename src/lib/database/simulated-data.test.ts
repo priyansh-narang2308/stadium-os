@@ -21,9 +21,9 @@ describe('Simulated Data', () => {
 
     it('should have valid stadium data', () => {
       expect(STADIUM.id).toBe('stadium-001');
-      expect(STADIUM.name).toBe('StadiumOS Arena');
-      expect(STADIUM.location).toBe('FIFA World Cup 2026');
-      expect(STADIUM.capacity).toBe(80000);
+      expect(STADIUM.name).toBe('MetLife Stadium');
+      expect(STADIUM.location).toBe('East Rutherford, New Jersey, USA');
+      expect(STADIUM.capacity).toBe(82500);
     });
   });
 
@@ -107,7 +107,7 @@ describe('Simulated Data', () => {
     it('should have valid weather data', () => {
       expect(WEATHER_DATA.temperature).toBeGreaterThanOrEqual(-50);
       expect(WEATHER_DATA.temperature).toBeLessThanOrEqual(60);
-      expect(['sunny', 'cloudy', 'rainy', 'stormy']).toContain(
+      expect(['sunny', 'cloudy', 'rainy', 'stormy', 'partly-cloudy']).toContain(
         WEATHER_DATA.condition
       );
     });
@@ -134,7 +134,7 @@ describe('Simulated Data', () => {
 
   describe('getCrowdDensity', () => {
     it('should return density for existing area', () => {
-      const density = getCrowdDensity('Gate C');
+      const density = getCrowdDensity('Gate C - East Entry Plaza');
       expect(typeof density).toBe('number');
       expect(density).toBeGreaterThanOrEqual(0);
     });
@@ -147,9 +147,9 @@ describe('Simulated Data', () => {
 
   describe('getGateData', () => {
     it('should return gate data for existing gate', () => {
-      const gate = getGateData('Gate A');
+      const gate = getGateData('Gate A - VIP');
       expect(gate).toBeDefined();
-      expect(gate?.gateName).toBe('Gate A');
+      expect(gate?.gateName).toBe('Gate A - VIP');
     });
 
     it('should return undefined for non-existent gate', () => {

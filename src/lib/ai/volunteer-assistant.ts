@@ -3,8 +3,9 @@ import { FACILITIES } from "@/src/lib/database/simulated-data";
 import { GoogleGenAI } from "@google/genai";
 import { 
   VOLUNTEER_ASSISTANT_SYSTEM_PROMPT,
-  VOLUNTEER_ASSISTANT_RESPONSE_FORMAT 
-} from "@/src/lib/config/prompts";
+  VOLUNTEER_ASSISTANT_RESPONSE_FORMAT,
+  AI_CONFIG,
+} from "@/src/lib/config/ai-config";
 import { logger } from "@/src/lib/logger";
 import { MAX_INPUT_LENGTH } from "@/src/lib/constants";
 
@@ -19,7 +20,7 @@ export class VolunteerAssistantService {
   private ai: GoogleGenAI;
 
   constructor() {
-    this.ai = new GoogleGenAI({});
+    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
   async getGuidance(
@@ -41,7 +42,7 @@ ${VOLUNTEER_ASSISTANT_RESPONSE_FORMAT}`;
 
     try {
       const interaction = await this.ai.interactions.create({
-        model: "gemini-flash-latest",
+        model: AI_CONFIG.VOLUNTEER_MODEL,
         input: prompt,
       });
 
