@@ -6,12 +6,9 @@ import {
   RATE_LIMIT_MAX_REQUESTS,
   MAX_INPUT_LENGTH 
 } from '../constants';
-import { generateCSRFToken, validateCSRFToken, getCSRFTokenFromHeaders } from './csrf';
+import { rateLimiter } from '../rate-limit/rate-limiter';
 
-// Rate limiting (in-memory for demo, use Redis in production)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
-export function validateEnv() {
+export async function validateEnv(): Promise<void> {
   try {
     EnvSchema.parse({
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
@@ -24,25 +21,18 @@ export function validateEnv() {
   }
 }
 
-export function rateLimit(identifier: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(identifier);
+export async function rateLimit(identifier: string): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const result = await rateLimiter.consume(identifier, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS);
+  return result;
+}
 
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(identifier, {
-      count: 1,
-      resetTime: now + RATE_LIMIT_WINDOW_MS,
-    });
-    return true;
-  }
-
-  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
-    logger.warn('Rate limit exceeded', { identifier });
-    return false;
-  }
-
-  record.count++;
-  return true;
+export async function getRateLimitHeaders(identifier: string): Promise<Record<string, string>> {
+  const { remaining, resetTime } = await rateLimiter.getRemaining(identifier, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS);
+  return {
+    'X-RateLimit-Limit': RATE_LIMIT_MAX_REQUESTS.toString(),
+    'X-RateLimit-Remaining': remaining.toString(),
+    'X-RateLimit-Reset': Math.ceil(resetTime / 1000).toString(),
+  };
 }
 
 export function getClientIdentifier(request: NextRequest): string {

@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/validation/schemas";
 import {
   rateLimit,
+  getRateLimitHeaders,
   getClientIdentifier,
   addSecurityHeaders,
   sanitizeInput,
@@ -27,7 +28,8 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request);
-    if (!rateLimit(clientId)) {
+    const rateLimitResult = await rateLimit(clientId);
+    if (!rateLimitResult.allowed) {
       const response = NextResponse.json(
         { error: 'Rate limit exceeded' },
         { status: 429 }

@@ -3,6 +3,7 @@ import { OperationsAssistantService } from "@/src/lib/ai/operations-assistant";
 import { OperationsRequestSchema } from "@/src/lib/validation/schemas";
 import {
   rateLimit,
+  getRateLimitHeaders,
   getClientIdentifier,
   addSecurityHeaders,
   sanitizeInput,
@@ -22,11 +23,17 @@ export async function POST(request: NextRequest) {
     }
 
     const clientId = getClientIdentifier(request);
-    if (!rateLimit(clientId)) {
+    const rateLimitResult = await rateLimit(clientId);
+    if (!rateLimitResult.allowed) {
       const response = NextResponse.json(
         { error: 'Rate limit exceeded' },
         { status: 429 }
       );
+      // Add rate limit headers
+      const rateLimitHeaders = await getRateLimitHeaders(clientId);
+      Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
       return addSecurityHeaders(response);
     }
 
@@ -63,11 +70,17 @@ export async function GET(request: NextRequest) {
     logger.info('Operations dashboard data request received');
 
     const clientId = getClientIdentifier(request);
-    if (!rateLimit(clientId)) {
+    const rateLimitResult = await rateLimit(clientId);
+    if (!rateLimitResult.allowed) {
       const response = NextResponse.json(
         { error: 'Rate limit exceeded' },
         { status: 429 }
       );
+      // Add rate limit headers
+      const rateLimitHeaders = await getRateLimitHeaders(clientId);
+      Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
       return addSecurityHeaders(response);
     }
 
